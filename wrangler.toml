@@ -1,0 +1,9 @@
+# Cấu hình Cloudflare Pages: thư mục web tĩnh + database D1 (biến DB)
+name = "tierlist-ngot-thang"
+pages_build_output_dir = "public"
+compatibility_date = "2024-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tierlist-nhac"
+database_id = "45bce823-8a5f-4c0f-9473-0c1bb2b58445"
