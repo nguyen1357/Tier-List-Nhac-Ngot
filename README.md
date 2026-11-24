@@ -59,7 +59,8 @@ Mẹo: kéo bài trên bảng để đổi hạng, chuột phải vào bài đ�
 
 **Ngẫu nhiên (nút 🔀 bật):** bấm Rút bài để lấy một bài bất kỳ. Bài rút ra tự phát nghe thử, nhấn Space để phát / dừng.
 **Theo album (nút 🔀 tắt):** rút lần lượt từng album, thứ tự album ngẫu nhiên, bài trong album đúng thứ tự.
-Bấm đúp vào khung bài (hoặc phím `L`) để chọn album, EP hoặc bài muốn xếp trước.
+**Chọn bài để nghe:** bấm đúp vào khung đĩa (hoặc phím `L`) để mở danh sách tất cả bài như playlist; bấm bài nào là bài đó lên khung ngay, bài đang nghe (nếu có) trở về bộ bài.
+**Menu nhạc (nút ♫, phím `F`):** bỏ tick album hoặc bài không muốn xếp lượt này, ví dụ chỉ xếp 2 album.
 
 Phím tắt: `Space` phát / dừng nghe thử · `N` rút bài · `S` bật/tắt ngẫu nhiên · `1`–`5` xếp hạng · `X` bỏ bài · `Z` hoàn tác · `O` mở Apple Music · `T` vote · `L` chọn bài xếp trước · `M` menu.
 

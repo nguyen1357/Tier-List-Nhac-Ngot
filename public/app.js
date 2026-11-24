@@ -174,10 +174,16 @@ function placedSet() {
   for (const t of LIST.tiers) for (const id of S.tiers[t.id]) set.add(id);
   return set;
 }
+/** Các bài được xếp trong lượt này: bỏ các bài đã tắt trong Menu nhạc */
+function playSongs() {
+  const ex = new Set((S && S.excluded) || []);
+  return ACTIVE.filter((s) => !ex.has(s.id));
+}
+const inPlay = (id) => ACTIVE_SET.has(id) && !((S && S.excluded) || []).includes(id);
 function pendingIds() {
   const placed = placedSet();
   const removed = new Set(S.removed);
-  return ACTIVE.map((s) => s.id).filter((id) => !placed.has(id) && !removed.has(id) && id !== S.current);
+  return playSongs().map((s) => s.id).filter((id) => !placed.has(id) && !removed.has(id) && id !== S.current);
 }
 function locate(id) {
   for (const t of LIST.tiers) {
@@ -202,7 +208,7 @@ function statusLabel(id) {
 }
 
 /* ---------------- mutations + undo + log ---------------- */
-const snap = () => JSON.stringify({ tiers: S.tiers, removed: S.removed, current: S.current, finished: S.finished });
+const snap = () => JSON.stringify({ tiers: S.tiers, removed: S.removed, current: S.current, finished: S.finished, excluded: S.excluded });
 function log(e) { S.events.push({ t: new Date().toISOString(), ...e }); }
 function commit(event, fn) {
   const before = snap();
@@ -217,8 +223,8 @@ function commit(event, fn) {
   return true;
 }
 function checkFinished() {
-  const N = ACTIVE.length;
-  const done = placedSet().size + S.removed.length === N && !S.current;
+  const N = playSongs().length;
+  const done = N > 0 && placedSet().size + S.removed.length === N && !S.current;
   if (done && !S.finished) {
     S.finished = true;
     log({ type: 'finish' });
@@ -279,9 +285,9 @@ function toStage(id) {
 /* ---------------- drawing ---------------- */
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /* Nhóm album (bảng chọn bài hiển thị theo năm ra mắt). Single là một nhóm riêng. */
-function albumGroups() {
+function albumGroups(source = playSongs()) {
   const groups = new Map();
-  ACTIVE.forEach((s, idx) => {
+  source.forEach((s, idx) => {
     const isAlbum = s.album && s.album !== 'Single';
     const key = isAlbum ? `a:${s.album}` : `s:${s.id}`;
     if (!groups.has(key)) groups.set(key, { key, album: isAlbum ? s.album : null, artist: s.artist, year: s.year || 9999, first: idx, songs: [] });
@@ -317,15 +323,12 @@ function setDrawMode(mode) {
 }
 /** Bài tiếp theo: bài đã chọn xếp trước -> theo album (nếu tắt ngẫu nhiên) -> ngẫu nhiên */
 function nextPick(pool) {
-  const pend = new Set(pool);
   const byAlbum = S.drawMode === 'album';
   const deferred = new Set(S.deferred);
   const ordered = (cands) => {
     const c = new Set(cands);
     return [...albumOrderIds().filter((id) => c.has(id) && !deferred.has(id)), ...S.deferred.filter((id) => c.has(id))];
   };
-  const queued = S.queue.filter((id) => pend.has(id));
-  if (queued.length) return byAlbum ? { pick: ordered(queued)[0], anim: null } : { pick: null, anim: queued };
   if (byAlbum) return { pick: ordered(pool)[0] || pool[0], anim: null };
   return { pick: null, anim: pool };
 }
@@ -356,7 +359,6 @@ async function draw(skip = false) {
   stopPreview();
   if (skip && prev) { // "Để sau": đẩy bài này xuống cuối hàng
     S.deferred = [...S.deferred.filter((x) => x !== prev), prev];
-    if (S.queue.includes(prev)) S.queue = [...S.queue.filter((x) => x !== prev), prev];
   }
   const { pick, anim } = nextPick(pool);
   const chosen = pick || anim[Math.floor(Math.random() * anim.length)];
@@ -365,7 +367,7 @@ async function draw(skip = false) {
   land(chosen, skip, prev);
 }
 function land(pick, skip, prev) {
-  if (!ACTIVE_SET.has(pick)) return draw(skip); // single vừa bị loại vì trùng album -> rút lại
+  if (!inPlay(pick)) return draw(skip); // bài vừa bị loại -> rút lại
   ensureApple(pick, false, true);
   S.deferred = S.deferred.filter((x) => x !== pick);
   commit(skip ? { type: 'skip-draw', song: pick, skipped: prev } : { type: 'draw', song: pick }, () => { S.current = pick; });
@@ -537,7 +539,7 @@ function blankSession(n) {
     removed: [],
     current: null,
     drawMode: store.get('tl:drawMode') === 'album' ? 'album' : 'random',
-    queue: [],
+    excluded: [],
     deferred: [],
     albumSeq: [],
     events: [],
@@ -557,15 +559,17 @@ async function newSession() {
 }
 function normalizeSession(s) {
   s.tiers = s.tiers || {};
+  s.excluded = [...new Set((s.excluded || []).filter((id) => ACTIVE_SET.has(id)))];
+  const ex = new Set(s.excluded);
   const seen = new Set();
-  const keep = (id) => ACTIVE_SET.has(id) && !seen.has(id) && seen.add(id);
+  const keep = (id) => ACTIVE_SET.has(id) && !ex.has(id) && !seen.has(id) && seen.add(id);
   for (const t of LIST.tiers) s.tiers[t.id] = (s.tiers[t.id] || []).filter(keep);
   for (const k of Object.keys(s.tiers)) if (!tierById(k)) delete s.tiers[k];
   s.removed = (s.removed || []).filter(keep);
-  if (s.current && (!ACTIVE_SET.has(s.current) || seen.has(s.current))) s.current = null;
+  if (s.current && (!ACTIVE_SET.has(s.current) || ex.has(s.current) || seen.has(s.current))) s.current = null;
   delete s.unliked;
   s.drawMode = s.drawMode === 'album' ? 'album' : 'random';
-  s.queue = [...new Set((s.queue || []).filter((id) => ACTIVE_SET.has(id)))];
+  delete s.queue;
   s.deferred = [...new Set((s.deferred || []).filter((id) => ACTIVE_SET.has(id)))];
   s.albumSeq = Array.isArray(s.albumSeq) ? s.albumSeq : [];
   s.events = s.events || [];
@@ -596,18 +600,13 @@ function renderHeader() {
   document.title = `${LIST.eyebrow} — ${LIST.title}`;
 }
 function renderProgress() {
-  const N = ACTIVE.length;
+  const N = playSongs().length;
+  const off = ACTIVE.length - N;
   const placed = placedSet().size;
   const removed = S.removed.length;
-  $('#bar').style.width = `${(placed / N) * 100}%`;
-  $('#progress-text').textContent = `Đã xếp ${placed}/${N} bài${removed ? ` · đã bỏ ${removed}` : ''}`;
+  $('#bar').style.width = `${N ? (placed / N) * 100 : 0}%`;
+  $('#progress-text').textContent = `Đã xếp ${placed}/${N} bài${removed ? ` · đã bỏ ${removed}` : ''}${off ? ` · tắt ${off} bài` : ''}`;
   $('#remaining').textContent = `Còn ${N - placed - removed}/${N}`;
-  const pend = new Set(pendingIds());
-  const queued = S.queue.filter((id) => pend.has(id)).length;
-  const qc = $('#queue-chip');
-  qc.hidden = !queued;
-  qc.textContent = `📌 ${queued}`;
-  qc.title = `${queued} bài đã chọn sẽ được rút trước`;
   $('#session-name').textContent = `${S.name} · ${fmtDateTime(S.createdAt)}${S.finished ? ' · ✅ xong' : ''}`;
 }
 function renderSaveState(text) {
@@ -676,7 +675,7 @@ function renderStage() {
     st.replaceChildren(S.finished
       ? h('div', { class: 'done' },
         h('div', { class: 'done-title' }, '🎉 Xong rồi!'),
-        h('div', { class: 'done-sub' }, `Đã xếp hết ${ACTIVE.length} bài`),
+        h('div', { class: 'done-sub' }, `Đã xếp hết ${playSongs().length} bài`),
         h('button', { type: 'button', class: 'btn primary', dataset: { act: 'export' } }, 'Tải kết quả'))
       : h('div', { class: 'empty-wrap' },
         h('button', { type: 'button', class: 'draw-cta', dataset: { act: 'draw' } },
@@ -684,7 +683,7 @@ function renderStage() {
           h('span', { class: 'draw-cta-text' }, S.drawMode === 'album' ? 'Bài tiếp theo' : 'Rút bài'),
           h('small', {}, S.drawMode === 'album' ? 'lần lượt từng album' : 'bấm để rút ngẫu nhiên')),
         h('button', { type: 'button', class: 'link-btn choose-link', dataset: { act: 'choose' } },
-          S.queue.some((id) => pendingIds().includes(id)) ? '📌 Sửa các bài đã chọn xếp trước' : '☰ Chọn bài muốn xếp trước')));
+          '☰ Chọn bài muốn nghe')));
     return;
   }
   const id = S.current;
@@ -700,7 +699,7 @@ function renderStage() {
   st.replaceChildren(h('div', { class: 'reveal', draggable: 'true', dataset: { id } },
     h('div', { class: 'reveal-top' },
       h('div', { class: `disc${playing ? ' playing' : ''}` },
-        h('div', { class: 'disc-label' }, m.artwork ? h('img', { src: m.artwork, alt: '', draggable: 'false' }) : null)),
+        h('div', { class: 'disc-label' }, m.artwork ? h('img', { src: m.artwork, alt: '', draggable: 'false', onerror: (e) => e.target.remove() }) : null)),
       h('div', { class: 'reveal-info' },
         h('div', { class: 'kicker' }, m.artist + (m.feat ? ` · với ${m.feat}` : '')),
         h('div', { class: 'song-title', title: m.title }, songTitle),
@@ -787,7 +786,7 @@ document.addEventListener('contextmenu', (e) => {
 $('#stage').addEventListener('dblclick', (e) => {
   if (!S || !S.current || rolling || e.target.closest('button, a')) return;
   window.getSelection().removeAllRanges();
-  openChooser();
+  openPlaylist();
 });
 document.addEventListener('dblclick', (e) => {
   const c = e.target.closest && e.target.closest('.chip.removed[data-id]');
@@ -930,14 +929,15 @@ function openRules() {
   ];
   const tips = [
     'Tắt nút trộn 🔀 để rút lần lượt từng album (album theo thứ tự ngẫu nhiên).',
-    'Bấm đúp vào khung bài để chọn album hoặc bài muốn xếp trước.',
+    'Bấm đúp vào khung đĩa để chọn ngay bài muốn nghe.',
+    'Nút ♫ (Menu nhạc): bỏ tick album hoặc bài không muốn xếp lượt này.',
     'Kéo bài trên bảng để đổi hạng hoặc đổi thứ tự.',
     'Chuột phải vào một bài để nghe lại.',
     'Bấm vào tiêu đề hoặc tên hạng để sửa chữ.',
   ];
   const keys = [
     ['Space', 'Phát / dừng nghe thử'], ['N', 'Rút bài'], [`1 – ${LIST.tiers.length}`, 'Xếp vào hạng'], ['X', 'Bỏ bài'], ['Z', 'Hoàn tác'],
-    ['O', 'Mở Apple Music'], ['S', 'Bật/tắt ngẫu nhiên'], ['L', 'Chọn bài xếp trước'], ['M', 'Menu'],
+    ['O', 'Mở Apple Music'], ['S', 'Bật/tắt ngẫu nhiên'], ['L', 'Chọn bài để nghe'], ['F', 'Menu nhạc'], ['M', 'Menu'],
   ];
   openModal('Cách chơi', h('div', { class: 'rules' },
     h('ol', { class: 'steps' }, steps.map(([icon, text]) => h('li', {}, h('span', { class: 'step-icon' }, icon), text))),
@@ -951,53 +951,6 @@ function openRules() {
     h('div', { class: 'keys' }, keys.map(([k, d]) => h('div', { class: 'key' }, h('kbd', {}, k), h('span', {}, d))))));
 }
 
-/* ---------- + Bài ---------- */
-function openAddSong() {
-  const f = h('form', { class: 'form' },
-    h('label', { class: 'full' }, 'Tên bài *', h('input', { type: 'text', name: 'title', required: true, autocomplete: 'off' })),
-    h('label', {}, 'Nghệ sĩ *', h('input', { type: 'text', name: 'artist', value: 'Ngọt', required: true })),
-    h('label', {}, 'Kết hợp với (feat.)', h('input', { type: 'text', name: 'feat' })),
-    h('label', {}, 'Album (để trống = Single)', h('input', { type: 'text', name: 'album', list: 'album-list' })),
-    h('label', {}, 'Năm', h('input', { type: 'number', name: 'year', min: 1990, max: 2100 })),
-    h('label', { class: 'full' }, 'Link Apple Music (không bắt buộc)', h('input', { type: 'url', name: 'appleUrl', placeholder: 'https://music.apple.com/…' })),
-    h('label', { class: 'check full' }, h('input', { type: 'checkbox', name: 'drawNow' }), 'Nghe luôn bài này'),
-    h('div', { class: 'row full', style: 'grid-column:1/-1;justify-content:flex-end' },
-      h('button', { type: 'button', class: 'btn', onclick: closeModal }, 'Huỷ'),
-      h('button', { type: 'submit', class: 'btn primary' }, 'Thêm bài')),
-    h('datalist', { id: 'album-list' }, [...ALBUM_COUNT.keys()].map((a) => h('option', { value: a }))));
-  f.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const d = Object.fromEntries(new FormData(f));
-    const title = d.title.trim();
-    if (!title) return;
-    // chống trùng: so tên (bỏ dấu, bỏ phần trong ngoặc) với toàn bộ danh sách
-    const newAlbum = d.album.trim() || 'Single';
-    const dup = LIST.songs.find((s) => baseTitle(s.short || s.title) === baseTitle(title) || baseTitle(s.title) === baseTitle(title));
-    if (dup && dup.album !== 'Single' && newAlbum === 'Single') {
-      return toast(`“${displayTitle(dup)}” đã có trong album ${dup.album}`, 'warn');
-    }
-    if (dup && !confirm(`Đã có “${displayTitle(dup)}” (${dup.artist} · ${dup.album}).\n\nVẫn thêm bài này?`)) return;
-    let id = slug(title);
-    for (let n = 2; SONGS.has(id); n++) id = `${slug(title)}-${n}`;
-    const song = { id, title, artist: d.artist.trim() || 'Ngọt' };
-    if (d.feat.trim()) song.feat = d.feat.trim();
-    song.album = d.album.trim() || 'Single';
-    song.year = d.year ? Number(d.year) : null;
-    if (d.appleUrl.trim()) song.appleUrl = d.appleUrl.trim();
-    if (song.album === 'Single') song.verify = true;
-    LIST.songs.push(song);
-    indexSongs();
-    saveList();
-    log({ type: 'add-song', song: id });
-    closeModal();
-    if (d.drawNow) toStage(id); else { save(); render(); }
-    ensureApple(id, false, true);
-    toast(`＋ Đã thêm ${displayTitle(song)}`, 'ok');
-  });
-  openModal('＋ Thêm bài', f);
-  setTimeout(() => f.querySelector('input[name=title]').focus(), 30);
-}
-
 /* ---------- Menu ---------- */
 function openMenu() {
   const missing = ACTIVE.filter((s) => !APPLE[s.id]).length;
@@ -1007,8 +960,9 @@ function openMenu() {
       if (confirm('Bắt đầu lần xếp mới? Lần xếp hiện tại vẫn được lưu.')) { closeModal(); newSession(); }
     }),
     item('🗂 Lịch sử', 'Mở lại các lần xếp trước', openHistory),
-    item('☰ Chọn bài xếp trước', 'Theo album, EP hoặc từng bài', openChooser),
-    item('🎵 Danh sách bài', `${ACTIVE.length} bài`, openSongs),
+    item('♫ Menu nhạc', `Chọn album, bài sẽ xếp · đang ${playSongs().length}/${ACTIVE.length}`, openMusicMenu),
+    item('☰ Chọn bài để nghe', 'Bấm một bài để nghe ngay', openPlaylist),
+    item('🗑 Quản lý bài', 'Xoá bài khỏi danh sách', openSongs),
     item('📜 Nhật ký', `${S.events.length} thao tác`, openLog),
     item('🎨 Sửa tiêu đề & hạng', 'Tên, màu, thêm hoặc xoá hạng', () => openLabelEditor()),
     item('✏️ Đổi tên lần xếp', S.name, renameSession),
@@ -1424,6 +1378,8 @@ function describeEvent(e) {
     case 'undo': return '↶ Hoàn tác';
     case 'rename': return `Đổi tên thành “${e.name}”`;
     case 'draw-mode': return e.mode === 'album' ? '💿 Rút theo album' : '🔀 Rút ngẫu nhiên';
+    case 'pick': return `☰ Chọn nghe: ${s}`;
+    case 'filter': return `♫ ${e.on ? 'Bật' : 'Tắt'} ${e.count} bài trong Menu nhạc`;
     case 'delete-song': return `🗑 Xoá bài: ${e.title || e.song}`;
     case 'edit-labels': return '🎨 Sửa tiêu đề / các hạng';
     case 'finish': return '🎉 Xếp xong toàn bộ';
@@ -1439,75 +1395,128 @@ function openLog() {
     h('ul', { class: 'log-list' }, [...S.events].reverse().map((e) => h('li', {}, h('time', {}, fmtTime(e.t)), h('span', {}, describeEvent(e)))))), { wide: true });
 }
 
-/* ---------- Chọn bài / album muốn xếp trước ---------- */
-function openChooser() {
+/* ---------- Menu nhạc: tick / bỏ tick album, bài sẽ xếp trong lượt này ---------- */
+function statusTagEl(id) {
+  if (!inPlay(id)) return h('span', { class: 'tag off' }, 'Không xếp');
+  const l = locate(id);
+  const t = l.zone === 'tier' ? tierById(l.tier) : null;
+  return h('span', { class: 'tag', style: t ? `--c:${t.color};--t:${t.text}` : '' }, statusLabel(id));
+}
+/** Bật (include=true) hoặc tắt các bài trong lượt này. Tắt bài đã xếp thì hỏi lại rồi gỡ khỏi bảng. */
+function setInPlay(ids, include) {
+  const ex = new Set(S.excluded);
+  const target = ids.filter((id) => (include ? ex.has(id) : !ex.has(id)));
+  if (!target.length) return true;
+  if (!include) {
+    const placedN = target.filter((id) => locate(id).zone === 'tier').length;
+    if (placedN && !confirm(`${placedN} bài đã xếp sẽ bị gỡ khỏi bảng. Tiếp tục?`)) return false;
+    if (target.includes(S.current)) stopPreview();
+  }
+  commit({ type: 'filter', on: include, count: target.length }, () => {
+    target.forEach((id) => { if (include) ex.delete(id); else { ex.add(id); detach(id); } });
+    S.excluded = [...ex];
+  });
+  return true;
+}
+function openMusicMenu() {
   const body = h('div', { class: 'chooser' });
-  const sel = new Set(S.queue);
   const open = new Set();
-  const statusTag = (id) => {
-    const l = locate(id);
-    const t = l.zone === 'tier' ? tierById(l.tier) : null;
-    return h('span', { class: 'tag', style: t ? `--c:${t.color};--t:${t.text}` : '' }, statusLabel(id));
-  };
-  const commitQueue = () => {
-    S.queue = albumOrderIds().filter((id) => sel.has(id));
-    save();
-    renderProgress();
-    renderStage();
-    paint();
-  };
-  function groupEl(g, pend) {
+  function groupEl(g, ex) {
     const ids = g.songs.map((x) => x.id);
-    const selectable = ids.filter((id) => pend.has(id));
-    const nSel = selectable.filter((id) => sel.has(id)).length;
-    const done = ids.filter((id) => locate(id).zone === 'tier').length;
+    const onN = ids.filter((id) => !ex.has(id)).length;
     const single = !g.album;
-    const cb = h('input', { type: 'checkbox', disabled: !selectable.length, title: single ? 'Chọn bài này' : 'Chọn cả album' });
-    cb.checked = selectable.length > 0 && nSel === selectable.length;
-    cb.indeterminate = nSel > 0 && nSel < selectable.length;
+    const cb = h('input', { type: 'checkbox', title: single ? 'Xếp bài này' : 'Xếp cả album' });
+    cb.checked = onN === ids.length;
+    cb.indeterminate = onN > 0 && onN < ids.length;
     cb.addEventListener('click', (e) => e.stopPropagation());
-    cb.addEventListener('change', () => { selectable.forEach((id) => (cb.checked ? sel.add(id) : sel.delete(id))); commitQueue(); });
-    const name = single ? displayTitle(g.songs[0]) : g.album;
-    const info = [single ? 'Single' : `${g.songs.length} bài`, g.year === 9999 ? null : g.year, g.artist, !single && done ? `đã xếp ${done}` : null].filter(Boolean).join(' · ');
+    cb.addEventListener('change', () => { setInPlay(ids, cb.checked); paint(); });
+    const done = ids.filter((id) => locate(id).zone === 'tier').length;
+    const info = [single ? 'Single' : (onN === ids.length ? `${ids.length} bài` : `${onN}/${ids.length} bài`), g.year === 9999 ? null : g.year, g.artist, done ? `đã xếp ${done}` : null].filter(Boolean).join(' · ');
     const isOpen = open.has(g.key);
     const head = h('div', {
       class: `grp-head${single ? '' : ' expandable'}`,
       title: single ? '' : (isOpen ? 'Bấm để thu gọn' : 'Bấm để xem các bài'),
       onclick: () => {
-        if (single) { if (!cb.disabled) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); } return; }
+        if (single) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); return; }
         if (isOpen) open.delete(g.key); else open.add(g.key);
         paint();
       },
     },
-    h('span', { class: 'grp-check' }, cb, h('span', { class: 'grp-text' }, h('b', {}, name), h('small', {}, info))),
-    single ? statusTag(ids[0]) : h('span', { class: `chev${isOpen ? ' open' : ''}`, 'aria-hidden': 'true' }, '›'));
-    const songs = !single && open.has(g.key) ? h('div', { class: 'grp-songs' }, g.songs.map((x) => {
-      const c = h('input', { type: 'checkbox', disabled: !pend.has(x.id) });
-      c.checked = pend.has(x.id) && sel.has(x.id);
-      c.addEventListener('change', () => { if (c.checked) sel.add(x.id); else sel.delete(x.id); commitQueue(); });
-      return h('label', { class: 'song-row' }, c, h('span', { class: 'song-no' }, x.track || ''), h('span', { class: 'song-name' }, displayTitle(x)), statusTag(x.id));
+    h('span', { class: 'grp-check' }, cb, h('span', { class: 'grp-text' }, h('b', {}, single ? displayTitle(g.songs[0]) : g.album), h('small', {}, info))),
+    single ? statusTagEl(ids[0]) : h('span', { class: `chev${isOpen ? ' open' : ''}`, 'aria-hidden': 'true' }, '›'));
+    const songs = !single && isOpen ? h('div', { class: 'grp-songs' }, g.songs.map((x) => {
+      const c = h('input', { type: 'checkbox' });
+      c.checked = !ex.has(x.id);
+      c.addEventListener('change', () => { setInPlay([x.id], c.checked); paint(); });
+      return h('label', { class: `song-row${ex.has(x.id) ? ' off' : ''}` }, c, h('span', { class: 'song-no' }, x.track || ''), h('span', { class: 'song-name' }, displayTitle(x)), statusTagEl(x.id));
     })) : null;
-    return h('div', { class: `grp${nSel ? ' has-sel' : ''}` }, head, songs);
+    return h('div', { class: `grp${onN ? '' : ' off'}` }, head, songs);
   }
   function paint() {
-    const pend = new Set(pendingIds());
-    const nSel = [...sel].filter((id) => pend.has(id)).length;
+    const ex = new Set(S.excluded);
+    const on = ACTIVE.length - ex.size;
     body.replaceChildren(
       h('div', { class: 'chooser-top' },
-        h('span', { class: 'chooser-label' }, 'Cách rút'),
-        h('div', { class: 'seg' }, Object.entries(DRAW_MODES).map(([m, label]) => h('button', {
-          type: 'button', class: `seg-btn${S.drawMode === m ? ' on' : ''}`, onclick: () => { setDrawMode(m); paint(); },
-        }, label))),
-        h('span', { class: 'muted' }, S.drawMode === 'album' ? 'Album theo thứ tự ngẫu nhiên, bài theo đúng thứ tự trong album' : 'Mỗi lần rút một bài bất kỳ')),
-      h('div', { class: 'chooser-list' }, albumGroups().map((g) => groupEl(g, pend))),
-      h('div', { class: 'chooser-foot' },
-        h('span', {}, nSel ? `Đã chọn ${nSel} bài, sẽ được rút trước` : 'Tick album hoặc bài để xếp trước'),
+        h('span', { class: 'chooser-sum' }, h('b', {}, `${on}/${ACTIVE.length}`), ' bài sẽ được xếp'),
         h('div', { class: 'row' },
-          nSel ? h('button', { type: 'button', class: 'btn', onclick: () => { sel.clear(); commitQueue(); } }, 'Bỏ chọn hết') : null,
-          h('button', { type: 'button', class: 'btn primary', onclick: closeModal }, 'Xong'))));
+          h('button', { type: 'button', class: 'btn sm', onclick: () => { setInPlay(ACTIVE.map((x) => x.id), true); paint(); } }, 'Chọn tất cả'),
+          h('button', { type: 'button', class: 'btn sm', onclick: () => { setInPlay(ACTIVE.map((x) => x.id), false); paint(); } }, 'Bỏ chọn tất cả'))),
+      h('div', { class: 'chooser-list' }, albumGroups(ACTIVE).map((g) => groupEl(g, ex))),
+      h('div', { class: 'chooser-foot' },
+        h('span', {}, 'Bỏ tick album hoặc bài không muốn xếp lượt này'),
+        h('button', { type: 'button', class: 'btn primary', onclick: closeModal }, 'Xong')));
   }
-  openModal('Chọn bài xếp trước', body, { wide: true });
+  openModal('Menu nhạc', body, { wide: true });
   paint();
+}
+
+/* ---------- Chọn bài để nghe: danh sách như playlist, bấm là nghe ngay ---------- */
+function pickSong(id) {
+  closeModal();
+  if (!inPlay(id) || S.current === id || rolling) return;
+  stopPreview();
+  const from = locate(id);
+  const prev = S.current; // bài đang nghe (nếu có) trở về bộ bài để rút ngẫu nhiên sau
+  commit({ type: 'pick', song: id, replaced: prev || undefined, from: from.tier || from.zone }, () => { detach(id); S.current = id; });
+  S.deferred = S.deferred.filter((x) => x !== id);
+  ensureApple(id, false, true);
+  if (meta(id).preview) togglePreview();
+  if (prev) toast(`“${displayTitle(SONGS.get(prev))}” đã trở về bộ bài`);
+}
+function openPlaylist() {
+  const q = h('input', { type: 'search', placeholder: 'Tìm bài, album…', class: 'pl-search' });
+  const count = h('span', { class: 'muted' });
+  const list = h('div', { class: 'pl-list', role: 'list' });
+  function paint() {
+    const term = norm(q.value);
+    const songs = albumGroups(playSongs()).flatMap((g) => g.songs)
+      .filter((x) => !term || norm(`${x.title} ${x.short || ''} ${x.album} ${x.artist} ${x.feat || ''}`).includes(term));
+    count.textContent = `${songs.length} bài`;
+    list.replaceChildren(...songs.map((x, i) => {
+      const m = meta(x.id);
+      const cur = S.current === x.id;
+      const art = m.artwork
+        ? h('img', { src: m.artwork.replace(/\/\d+x\d+bb\./, '/100x100bb.'), alt: '', loading: 'lazy', onerror: (e) => e.target.replaceWith(h('span', { class: 'pl-art-ph' }, '♪')) })
+        : h('span', { class: 'pl-art-ph' }, '♪');
+      return h('button', {
+        type: 'button', role: 'listitem',
+        class: `pl-row${cur ? ' current' : ''}${locate(x.id).zone === 'tier' ? ' done' : ''}`,
+        title: cur ? 'Đang nghe' : 'Bấm để nghe ngay',
+        onclick: () => pickSong(x.id),
+      },
+      h('span', { class: 'pl-no' }, cur ? '♫' : i + 1),
+      h('span', { class: 'pl-art' }, art),
+      h('span', { class: 'pl-main' }, h('b', {}, displayTitle(m)), h('small', {}, m.artist)),
+      h('span', { class: 'pl-album' }, m.album && m.album !== 'Single' ? m.albumShort : 'Single'),
+      h('span', { class: 'pl-year' }, m.year || ''),
+      h('span', { class: 'pl-status' }, statusTagEl(x.id)));
+    }));
+  }
+  q.addEventListener('input', paint);
+  openModal('Chọn bài để nghe', h('div', { class: 'playlist' }, h('div', { class: 'pl-top' }, q, count), list), { wide: true });
+  paint();
+  const cur = list.querySelector('.pl-row.current');
+  if (cur) cur.scrollIntoView({ block: 'center' });
 }
 
 /** Xoá hẳn một bài khỏi danh sách (gỡ khỏi bảng nếu đang được xếp) */
@@ -1606,12 +1615,12 @@ document.addEventListener('keydown', (e) => {
     case 'x': removeSong(S.current); break;
     case 'z': undo(); break;
     case 't': openVote(); break;
-    case 'a': e.preventDefault(); openAddSong(); break;
     case 'c': openRules(); break;
     case 'm': openMenu(); break;
     case 'o': openApple(); break;
     case 'e': e.preventDefault(); openLabelEditor(); break;
-    case 'l': openChooser(); break;
+    case 'l': openPlaylist(); break;
+    case 'f': openMusicMenu(); break;
     case 's': setDrawMode(S.drawMode === 'album' ? 'random' : 'album'); break;
     case 'p': togglePreview(); break;
     case 'n': draw(e.shiftKey); break;
@@ -1629,12 +1638,12 @@ $('.draw-card').addEventListener('click', (e) => {
     skip: () => draw(true),
     remove: () => removeSong(S.current),
     vote: openVote,
-    add: openAddSong,
+    music: openMusicMenu,
     rules: openRules,
     undo,
     menu: openMenu,
     export: () => exportSession(S.id),
-    choose: openChooser,
+    choose: openPlaylist,
     shuffle: () => setDrawMode(S.drawMode === 'album' ? 'random' : 'album'),
   };
   if (actions[act]) actions[act]();

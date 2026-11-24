@@ -309,7 +309,39 @@ input:focus { outline: none; border-color: #f2a77c; box-shadow: 0 0 0 3px rgba(2
 .log-list li { padding: 7px 0; border-bottom: 1px solid var(--line); display: flex; gap: 12px; }
 .log-list time { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; }
 
-/* ---------- chọn bài xếp trước ---------- */
+/* ---------- chọn bài để nghe (playlist) ---------- */
+.pl-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.pl-search { flex: 1; min-width: 200px; }
+.pl-list { display: flex; flex-direction: column; }
+.pl-row {
+  display: grid; grid-template-columns: 34px 40px minmax(0, 2.2fr) minmax(0, 1.2fr) 48px 104px; align-items: center; gap: 12px;
+  width: 100%; border: 0; background: none; font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+  padding: 7px 10px; border-radius: 10px;
+}
+.pl-row:nth-child(even) { background: rgba(242, 229, 217, .35); }
+.pl-row:hover { background: #fff1e5; }
+.pl-row.current { background: var(--accent-soft); }
+.pl-row.done .pl-main b { opacity: .6; }
+.pl-no { font-size: 12.5px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.pl-row.current .pl-no { color: var(--accent-deep); font-size: 16px; }
+.pl-art { width: 40px; height: 40px; border-radius: 6px; overflow: hidden; background: #f3e6da; display: grid; place-items: center; }
+.pl-art img { width: 100%; height: 100%; object-fit: cover; }
+.pl-art-ph { color: var(--muted); }
+.pl-main { display: flex; flex-direction: column; min-width: 0; }
+.pl-main b, .pl-main small, .pl-album { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-main b { font-size: 13.5px; }
+.pl-main small { font-size: 12px; color: var(--muted); }
+.pl-album { font-size: 12.5px; color: var(--muted); }
+.pl-status { text-align: right; }
+.pl-year { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) { .pl-row { grid-template-columns: 26px 40px 1fr 96px; } .pl-album, .pl-year { display: none; } }
+
+/* ---------- menu nhạc (lọc bài) ---------- */
+.chooser-sum { font-size: 14px; }
+.chooser-top { justify-content: space-between; }
+.grp.off .grp-text b { opacity: .5; text-decoration: line-through; }
+.song-row.off .song-name { opacity: .5; text-decoration: line-through; }
+.tag.off { background: #efe7e0; color: #a8968a; }
 .chooser-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .chooser-label { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
 .seg { display: inline-flex; background: var(--accent-soft); border-radius: 99px; padding: 3px; }
