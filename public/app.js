@@ -110,7 +110,7 @@ function excludeDuplicate(id, dupId) {
   }
   saveList();
   const d = SONGS.get(dupId);
-  toast(`Bỏ qua single “${displayTitle(s)}” — đã có trong album ${d.album} (${displayTitle(d)})`, 'warn');
+  toast(`Bỏ qua “${displayTitle(s)}” vì đã có trong album ${d.album}`, 'warn');
   return true;
 }
 function toggleGroup(flag, label) {
@@ -222,7 +222,7 @@ function checkFinished() {
   if (done && !S.finished) {
     S.finished = true;
     log({ type: 'finish' });
-    setTimeout(() => toast(`🎉 Xếp xong cả ${N} bài! Bấm ⋯ (M) → Xuất kết quả.`, 'ok'), 300);
+    setTimeout(() => toast(`🎉 Xếp xong cả ${N} bài!`, 'ok'), 300);
   } else if (!done) S.finished = false;
 }
 function undo() {
@@ -281,15 +281,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function draw(skip = false) {
   if (rolling) return;
   if (S.current && !skip) {
-    toast('Xếp bài đang nghe trước (phím 1–5 hoặc kéo thả), X để bỏ · Shift+Space = trả bài về & rút bài khác', 'warn');
-    const st = $('#stage');
+    toast('Xếp bài này vào một hạng trước đã', 'warn');
+    const st = $('#picker');
     st.classList.remove('nudge'); void st.offsetWidth; st.classList.add('nudge');
     return;
   }
   const pool = pendingIds();
   const prev = S.current;
   if (!pool.length) {
-    return toast(skip ? 'Không còn bài nào khác trong bộ bài' : (S.finished ? 'Đã xếp xong tất cả! 🎉' : 'Hết bài để rút.'), 'warn');
+    return toast(skip ? 'Không còn bài nào khác' : 'Hết bài để rút', 'warn');
   }
   stopPreview();
   const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -302,6 +302,7 @@ async function draw(skip = false) {
 async function rollAnimation(pool, pick) {
   const st = $('#stage');
   st.className = 'stage rolling';
+  $('#picker').hidden = true;
   const title = h('div', { class: 'roll-title' });
   const kicker = h('div', { class: 'roll-kicker' }, 'ĐANG RÚT…');
   st.replaceChildren(h('div', { class: 'rolling-wrap' }, h('div', { class: 'disc' }, h('div', { class: 'disc-label' })), h('div', {}, kicker, title)));
@@ -325,7 +326,7 @@ async function ensureApple(id, force = false, quiet = false) {
     APPLE[id] = await api.get(`/api/apple/${LIST.id}/${encodeURIComponent(id)}${force ? '?force=1' : ''}`);
   } catch (e) {
     console.warn(e);
-    if (!quiet && S.current === id) toast('Chưa kết nối được Apple Music — vẫn có nút mở trang tìm kiếm.', 'warn');
+    if (!quiet && S.current === id) toast('Không tải được thông tin Apple Music', 'warn');
   } finally {
     appleInflight.delete(id);
   }
@@ -340,7 +341,7 @@ function stopPreview() {
   const d = $('#stage .disc');
   if (d) d.classList.remove('playing');
   const b = $('#preview-btn');
-  if (b) b.firstChild.textContent = '▶ Nghe thử 30s ';
+  if (b) b.firstChild.textContent = '▶ Nghe thử ';
 }
 function togglePreview() {
   if (!S.current) return;
@@ -349,7 +350,7 @@ function togglePreview() {
   if (audio && !audio.paused) return stopPreview();
   audio = new Audio(m.preview);
   audio.volume = 0.8;
-  audio.play().catch(() => toast('Trình duyệt chặn phát nhạc — bấm lại nút nghe thử', 'warn'));
+  audio.play().catch(() => toast('Bấm Nghe thử thêm lần nữa', 'warn'));
   audio.addEventListener('ended', stopPreview);
   const d = $('#stage .disc');
   if (d) d.classList.add('playing');
@@ -409,7 +410,7 @@ async function syncAllApple() {
   if (!todo.length) return toast('Đã có thông tin Apple Music cho tất cả bài', 'ok');
   let done = 0; let found = 0; let failed = 0;
   const el = $('#save-state');
-  toast(`Đang tra Apple Music cho ${todo.length} bài (~${Math.ceil(todo.length * 1.6 / 60)} phút)…`);
+  toast(`Đang cập nhật ${todo.length} bài…`);
   for (const s of todo) {
     const r = await ensureApple(s.id, false, true);
     done++;
@@ -419,7 +420,7 @@ async function syncAllApple() {
   }
   renderSaveState();
   const skipped = todo.filter((s) => s.duplicateOf).length;
-  toast(`Xong: tìm thấy ${found}/${done} bài${failed ? ` · lỗi ${failed}` : ''}${skipped ? ` · bỏ qua ${skipped} single đã có trong album` : ''}`, found ? 'ok' : 'warn');
+  toast(`Đã cập nhật ${found}/${done} bài`, found ? 'ok' : 'warn');
 }
 
 /* ---------------- persistence ---------------- */
@@ -446,7 +447,7 @@ window.addEventListener('beforeunload', () => {
   if (saveTimer && S) navigator.sendBeacon(`/api/sessions/${S.id}`, new Blob([JSON.stringify(S)], { type: 'application/json' }));
 });
 async function saveList() {
-  try { await api.put(`/api/lists/${LIST.id}`, LIST); } catch (e) { toast(`Không lưu được danh sách bài: ${e.message}`, 'error'); }
+  try { await api.put(`/api/lists/${LIST.id}`, LIST); } catch (e) { toast(`Không lưu được: ${e.message}`, 'error'); }
 }
 
 function blankSession(n) {
@@ -500,10 +501,8 @@ async function loadSession(id) {
 }
 
 /* ---------------- rendering ---------------- */
-const HINT_PLACE = 'Phím 1–5 để xếp, hoặc kéo thẻ thả vào hạng. X = bỏ bài này (không thích / không xếp). O = mở Apple Music · P = nghe thử.';
-const HINT_IDLE = 'Kéo ô trên bảng để đổi hạng hoặc đổi thứ tự. Chuột phải vào ô để đưa lên khung rút nghe lại. Bấm vào tiêu đề hay tên hạng để sửa.';
-
 function render() {
+  renderPicker();
   renderProgress();
   renderBoard();
   if (!rolling) renderStage();
@@ -541,7 +540,7 @@ function chip(id, kind = '') {
     class: cls,
     draggable: 'true',
     dataset: { id },
-    title: `${displayTitle(m)}\n${m.artist} · ${m.album}${m.year ? ` (${m.year})` : ''}\n— Chuột phải: đưa lên khung rút nghe lại${kind === 'removed' ? '\n— Bấm đúp: trả về bộ bài' : ''}`,
+    title: `${displayTitle(m)}\n${m.artist} · ${m.album}${m.year ? ` (${m.year})` : ''}\nChuột phải: nghe lại${kind === 'removed' ? '\nBấm đúp: trả về bộ bài' : ''}`,
   }, h('b', {}, displayTitle(m)), h('small', {}, chipSub(m)));
 }
 function renderBoard() {
@@ -562,55 +561,64 @@ function renderBoard() {
   rz.replaceChildren(
     h('span', { class: 'label' }, `Đã bỏ (${S.removed.length})`),
     ...S.removed.map((id) => chip(id, 'removed')),
-    h('span', {}, S.removed.length ? 'Bấm đúp để trả về bộ bài' : 'Kéo thả vào đây để bỏ bài · bấm đúp để trả bài về bộ bài'),
+    ...(S.removed.length ? [] : [h('span', {}, 'Kéo bài vào đây để bỏ')]),
   );
+}
+function renderPicker() {
+  const p = $('#picker');
+  if (!S.current || rolling) { p.hidden = true; p.replaceChildren(); return; }
+  p.hidden = false;
+  p.replaceChildren(
+    h('div', { class: 'picker-head' },
+      h('span', { class: 'picker-label' }, 'Xếp vào hạng'),
+      h('span', { class: 'picker-more' },
+        h('button', { type: 'button', class: 'link-btn', dataset: { act: 'skip' }, title: 'Trả bài về và rút bài khác (Shift + Space)' }, 'Để sau'),
+        ' · ',
+        h('button', { type: 'button', class: 'link-btn', dataset: { act: 'remove' }, title: 'Không xếp bài này (X)' }, 'Bỏ bài'))),
+    h('div', { class: 'picker-tiers', style: `--n:${LIST.tiers.length}` }, LIST.tiers.map((t, i) =>
+      h('button', { type: 'button', class: 'pick', style: `--c:${t.color};--t:${t.text}`, dataset: { act: 'place', tier: t.id }, title: `${t.sub} (phím ${i + 1})` },
+        h('span', { class: 'pick-key' }, i + 1), h('span', { class: 'pick-name' }, t.name)))));
 }
 function renderStage() {
   const st = $('#stage');
-  $('#hint').textContent = S.current ? HINT_PLACE : HINT_IDLE;
+  renderPicker();
+  $('#draw-btn').classList.toggle('waiting', !!S.current);
   if (!S.current) {
     stopPreview();
     st.className = 'stage empty';
-    const N = ACTIVE.length;
-    st.replaceChildren(h('div', {
-      class: 'empty-msg',
-      html: S.finished
-        ? `Xong rồi! 🎉<small>Đã xếp hết ${N} bài. Bấm ⋯ (M) để xuất kết quả hoặc bắt đầu lần xếp mới.</small>`
-        : 'Bấm <b>RÚT</b> (Space) để rút bài tiếp theo',
-    }));
+    st.replaceChildren(S.finished
+      ? h('div', { class: 'done' },
+        h('div', { class: 'done-title' }, '🎉 Xong rồi!'),
+        h('div', { class: 'done-sub' }, `Đã xếp hết ${ACTIVE.length} bài`),
+        h('button', { type: 'button', class: 'btn primary', dataset: { act: 'export' } }, 'Tải kết quả'))
+      : h('button', { type: 'button', class: 'draw-cta', dataset: { act: 'draw' } },
+        h('span', { class: 'draw-cta-icon' }, '🎲'),
+        h('span', { class: 'draw-cta-text' }, 'Rút bài'),
+        h('small', {}, 'hoặc nhấn Space')));
     return;
   }
   const id = S.current;
   const m = meta(id);
-  const a = APPLE[id];
-  const loading = appleInflight.has(id);
   const playing = !!(audio && !audio.paused);
   st.className = 'stage revealed';
-
-  let status;
-  if (loading) status = h('span', { class: 'apple-status' }, '⏳ Đang tìm trên Apple Music…');
-  else if (a && !a.found) status = h('span', { class: 'apple-status' }, 'Không tìm thấy bài chính xác — nút sẽ mở trang tìm kiếm');
   const songTitle = songName(m);
+  const facts = [
+    m.album && m.album !== 'Single' ? `Album ${m.albumShort}` : 'Single',
+    m.year,
+    m.track ? `Bài ${m.track}${m.trackCount ? `/${m.trackCount}` : ''}` : null,
+  ].filter(Boolean).join(' · ');
   st.replaceChildren(h('div', { class: 'reveal', draggable: 'true', dataset: { id } },
     h('div', { class: 'reveal-top' },
       h('div', { class: `disc${playing ? ' playing' : ''}` },
         h('div', { class: 'disc-label' }, m.artwork ? h('img', { src: m.artwork, alt: '', draggable: 'false' }) : null)),
-      h('div', { style: 'min-width:0' },
-        h('div', { class: 'kicker' }, `${m.artist} · ${m.albumShort}${m.year ? ` (${m.year})` : ''}`),
-        h('div', { class: 'song-title' }, songTitle),
-        m.title !== songTitle ? h('div', { class: 'song-sub' }, m.title) : null,
-        m.feat ? h('div', { class: 'song-sub' }, `với ${m.feat}`) : null)),
-    h('dl', { class: 'meta' },
-      h('div', {}, h('dt', {}, 'Nghệ sĩ'), h('dd', {}, m.artist + (m.feat ? `, ${m.feat}` : ''))),
-      h('div', {}, h('dt', {}, 'Năm ra mắt'), h('dd', {}, m.year || '—')),
-      h('div', {}, h('dt', {}, 'Album'), h('dd', {}, m.album || '—')),
-      h('div', {}, h('dt', {}, 'Track'), h('dd', {}, m.track ? `${m.track}${m.trackCount ? `/${m.trackCount}` : ''}` : '—'))),
+      h('div', { class: 'reveal-info' },
+        h('div', { class: 'kicker' }, m.artist + (m.feat ? ` · với ${m.feat}` : '')),
+        h('div', { class: 'song-title', title: m.title }, songTitle),
+        h('div', { class: 'song-meta' }, facts))),
     h('div', { class: 'actions' },
-      h('a', { class: 'pill-btn apple', href: m.appleUrl || m.appleSearch, target: '_blank', rel: 'noopener', draggable: 'false', 'data-apple': true, title: `Mở bằng: ${openMode().label} (đổi trong Menu)` },
-        '♫ Mở trên Apple Music ', h('kbd', {}, 'O')),
-      m.preview ? h('button', { class: 'pill-btn ghost', id: 'preview-btn', type: 'button', onclick: togglePreview }, playing ? '❚❚ Dừng ' : '▶ Nghe thử 30s ', h('kbd', {}, 'P')) : null,
-      m.appleAlbumUrl ? h('a', { class: 'pill-btn ghost', href: m.appleAlbumUrl, target: '_blank', rel: 'noopener', draggable: 'false', 'data-apple': true }, 'Album ↗') : null),
-    status));
+      m.preview ? h('button', { class: 'pill-btn', id: 'preview-btn', type: 'button', onclick: togglePreview, title: 'Nghe thử 30 giây (P)' }, playing ? '❚❚ Dừng ' : '▶ Nghe thử ') : null,
+      h('a', { class: 'pill-btn ghost', href: m.appleUrl || m.appleSearch, target: '_blank', rel: 'noopener', draggable: 'false', 'data-apple': true, title: `Mở bằng ${openMode().label} (O)` }, 'Apple Music ↗')),
+    appleInflight.has(id) ? h('span', { class: 'apple-status' }, 'Đang tải thông tin…') : null));
 }
 
 /* ---------------- drag & drop ---------------- */
@@ -753,7 +761,7 @@ function toast(msg, kind = 'info') {
 
 /* ---------- Vote ---------- */
 function openVote() {
-  if (!S.current) return toast('Rút một bài trước khi vote (Space)', 'warn');
+  if (!S.current) return toast('Rút một bài trước đã', 'warn');
   const id = S.current;
   const counts = LIST.tiers.map(() => 0);
   let dur = Number(store.get('tl:voteDur')) || 30;
@@ -764,7 +772,7 @@ function openVote() {
   const start = () => {
     if (timer) return;
     if (left <= 0) left = dur;
-    timer = setInterval(() => { left--; if (left <= 0) { left = 0; stop(); toast('⏱ Hết giờ vote! Enter để chốt', 'ok'); } paint(); }, 1000);
+    timer = setInterval(() => { left--; if (left <= 0) { left = 0; stop(); toast('⏱ Hết giờ! Nhấn Enter để chốt', 'ok'); } paint(); }, 1000);
   };
   const winner = () => { const mx = Math.max(...counts); return mx > 0 ? counts.indexOf(mx) : -1; };
   const bump = (i, d) => { counts[i] = Math.max(0, counts[i] + d); paint(); };
@@ -803,7 +811,7 @@ function openVote() {
           h('button', { type: 'button', class: 'btn sm', onclick: () => { timer ? stop() : start(); paint(); } }, timer ? '❚❚ Dừng' : '▶ Chạy giờ'),
           h('button', { type: 'button', class: 'btn sm', onclick: () => { stop(); left = dur; counts.fill(0); paint(); } }, '↺ Làm lại')),
         h('button', { type: 'button', class: 'btn primary', onclick: apply }, w >= 0 ? `Chốt → ${LIST.tiers[w].name} (Enter)` : 'Chốt (Enter)')),
-      h('p', { class: 'muted' }, 'Bấm cột hoặc phím 1–5: +1 phiếu · Shift+1–5 / chuột phải: −1 · Space: chạy/dừng đồng hồ · Enter: chốt hạng nhiều phiếu nhất (hoà thì lấy hạng cao hơn) · Esc: đóng'),
+      h('p', { class: 'muted' }, 'Bấm vào cột (hoặc phím 1–5) để thêm phiếu, chuột phải để bớt. Enter để chốt.'),
     );
   }
   openModal('⏱ Vote', body, {
@@ -820,30 +828,30 @@ function openVote() {
 
 /* ---------- Luật ---------- */
 function openRules() {
-  const keys = [
-    ['Space', 'Rút bài tiếp theo (phải xếp bài đang nghe trước)'],
-    ['Shift + Space', 'Trả bài đang nghe về bộ bài & rút bài khác'],
-    [`1 – ${LIST.tiers.length}`, 'Xếp bài đang nghe vào hạng tương ứng'],
-    ['Kéo thả', 'Xếp / đổi hạng / đổi thứ tự trong hạng; thả vào “Đã bỏ” để bỏ; thả lên khung rút để nghe lại'],
-    ['Chuột phải', 'Đưa một bài trên bảng lên khung rút để nghe lại'],
-    ['X', 'Bỏ bài đang nghe (không thích / không xếp)'],
-    ['O / P', 'Mở bài trên Apple Music (app hoặc trình duyệt — đổi trong Menu) / nghe thử 30 giây'],
-    ['T', 'Vote cùng bạn bè (đếm phiếu + đồng hồ)'],
-    ['A', 'Thêm bài mới vào danh sách'],
-    ['Z / Ctrl+Z', 'Hoàn tác'],
-    ['Bấm vào chữ', 'Sửa trực tiếp tiêu đề, mô tả, tên & mô tả từng hạng (Enter lưu · Esc huỷ)'],
-    ['E / 🎨', 'Mở bảng sửa đầy đủ, kể cả màu các hạng'],
-    ['M', 'Menu: lần xếp mới, lịch sử, nhật ký, danh sách bài, xuất kết quả'],
-    ['C', 'Mở bảng luật này'],
+  const steps = [
+    ['🎲', 'Bấm Rút bài để lấy một bài ngẫu nhiên.'],
+    ['🎧', 'Nghe thử, hoặc mở trên Apple Music.'],
+    ['👆', 'Bấm vào một hạng để xếp bài.'],
   ];
-  openModal('Luật chơi', h('div', { class: 'rules' },
+  const tips = [
+    'Kéo bài trên bảng để đổi hạng hoặc đổi thứ tự.',
+    'Chuột phải vào một bài để nghe lại.',
+    'Bấm vào tiêu đề hoặc tên hạng để sửa chữ.',
+  ];
+  const keys = [
+    ['Space', 'Rút bài'], [`1 – ${LIST.tiers.length}`, 'Xếp vào hạng'], ['X', 'Bỏ bài'], ['Z', 'Hoàn tác'],
+    ['P', 'Nghe thử'], ['O', 'Mở Apple Music'], ['T', 'Vote'], ['M', 'Menu'],
+  ];
+  openModal('Cách chơi', h('div', { class: 'rules' },
+    h('ol', { class: 'steps' }, steps.map(([icon, text]) => h('li', {}, h('span', { class: 'step-icon' }, icon), text))),
     h('h3', {}, 'Các hạng'),
     h('dl', {}, LIST.tiers.map((t, i) => [
       h('dt', {}, h('span', { class: 'tag', style: `--c:${t.color};--t:${t.text}` }, `${i + 1} · ${t.name}`)),
       h('dd', {}, t.sub)])),
-    h('p', { class: 'muted' }, 'Mọi thao tác được tự động lưu vào thư mục data/ của server (kèm nhật ký từng lần xếp).'),
+    h('h3', {}, 'Mẹo'),
+    h('ul', { class: 'tips' }, tips.map((t) => h('li', {}, t))),
     h('h3', {}, 'Phím tắt'),
-    h('div', { class: 'keys' }, keys.map(([k, d]) => [h('kbd', {}, k), h('span', {}, d)]))));
+    h('div', { class: 'keys' }, keys.map(([k, d]) => h('div', { class: 'key' }, h('kbd', {}, k), h('span', {}, d))))));
 }
 
 /* ---------- + Bài ---------- */
@@ -854,8 +862,8 @@ function openAddSong() {
     h('label', {}, 'Kết hợp với (feat.)', h('input', { type: 'text', name: 'feat' })),
     h('label', {}, 'Album (để trống = Single)', h('input', { type: 'text', name: 'album', list: 'album-list' })),
     h('label', {}, 'Năm', h('input', { type: 'number', name: 'year', min: 1990, max: 2100 })),
-    h('label', { class: 'full' }, 'Link Apple Music (không bắt buộc — để trống app sẽ tự tìm)', h('input', { type: 'url', name: 'appleUrl', placeholder: 'https://music.apple.com/…' })),
-    h('label', { class: 'check full' }, h('input', { type: 'checkbox', name: 'drawNow' }), 'Đưa luôn lên khung rút'),
+    h('label', { class: 'full' }, 'Link Apple Music (không bắt buộc)', h('input', { type: 'url', name: 'appleUrl', placeholder: 'https://music.apple.com/…' })),
+    h('label', { class: 'check full' }, h('input', { type: 'checkbox', name: 'drawNow' }), 'Nghe luôn bài này'),
     h('div', { class: 'row full', style: 'grid-column:1/-1;justify-content:flex-end' },
       h('button', { type: 'button', class: 'btn', onclick: closeModal }, 'Huỷ'),
       h('button', { type: 'submit', class: 'btn primary' }, 'Thêm bài')),
@@ -869,7 +877,7 @@ function openAddSong() {
     const newAlbum = d.album.trim() || 'Single';
     const dup = LIST.songs.find((s) => baseTitle(s.short || s.title) === baseTitle(title) || baseTitle(s.title) === baseTitle(title));
     if (dup && dup.album !== 'Single' && newAlbum === 'Single') {
-      return toast(`Không thêm: “${displayTitle(dup)}” đã có trong album ${dup.album} (ưu tiên bản album)`, 'warn');
+      return toast(`“${displayTitle(dup)}” đã có trong album ${dup.album}`, 'warn');
     }
     if (dup && !confirm(`Đã có “${displayTitle(dup)}” (${dup.artist} · ${dup.album}).\n\nVẫn thêm bài này?`)) return;
     let id = slug(title);
@@ -896,23 +904,22 @@ function openAddSong() {
 /* ---------- Menu ---------- */
 function openMenu() {
   const missing = ACTIVE.filter((s) => !APPLE[s.id]).length;
-  const skippedN = LIST.songs.length - ACTIVE.length;
   const item = (title, desc, fn, cls = '') => h('button', { type: 'button', class: `menu-item ${cls}`, onclick: fn }, h('b', {}, title), h('span', {}, desc));
   openModal('Menu', h('div', { class: 'menu-grid' },
-    item('🆕 Lần xếp mới', 'Bắt đầu lại từ đầu, lần xếp hiện tại vẫn được giữ trong lịch sử', () => {
-      if (confirm('Bắt đầu một lần xếp mới?')) { closeModal(); newSession(); }
+    item('🆕 Lần xếp mới', 'Bắt đầu lại từ đầu', () => {
+      if (confirm('Bắt đầu lần xếp mới? Lần xếp hiện tại vẫn được lưu.')) { closeModal(); newSession(); }
     }),
-    item('🗂 Lịch sử các lần xếp', 'Xem / mở lại / xuất / xoá các lần xếp đã lưu', openHistory),
-    item('📜 Nhật ký lần xếp này', `${S.events.length} thao tác đã ghi`, openLog),
-    item('🎵 Danh sách bài', `${ACTIVE.length} bài${skippedN ? ` (bỏ qua ${skippedN} single trùng album)` : ''} · tìm kiếm, nghe lại`, openSongs),
-    item('🍎 Đồng bộ Apple Music', missing ? `Tra link, năm, ảnh bìa cho ${missing} bài còn thiếu` : 'Đã có đủ — bấm để kiểm tra lại', syncAllApple),
-    LIST.songs.some((s) => s.guest) && item(`🤝 Bài kết hợp: ${LIST.excludeGuests ? 'đang KHÔNG tính' : 'đang tính'}`, `${LIST.songs.filter((s) => s.guest).length} bài của nghệ sĩ khác có Thắng góp giọng — bấm để ${LIST.excludeGuests ? 'tính vào' : 'bỏ ra'}`, toggleGuests),
-    item(`🍎 Mở Apple Music bằng: ${openMode().label}`, `${openMode().note} — bấm để đổi cách mở`, cycleOpenMode),
-    item('🎨 Sửa tiêu đề & các hạng', 'Đổi tên, mô tả, màu (phím E) — hoặc bấm thẳng vào chữ trên trang để sửa tại chỗ', () => openLabelEditor()),
+    item('🗂 Lịch sử', 'Mở lại các lần xếp trước', openHistory),
+    item('🎵 Danh sách bài', `${ACTIVE.length} bài`, openSongs),
+    item('📜 Nhật ký', `${S.events.length} thao tác`, openLog),
+    item('🎨 Sửa tiêu đề & hạng', 'Tên, mô tả, màu', () => openLabelEditor()),
     item('✏️ Đổi tên lần xếp', S.name, renameSession),
-    item('⬇️ Xuất kết quả (.md)', 'Bảng xếp hạng + nhật ký, dạng Markdown', () => exportSession(S.id)),
-    item('⬇️ Xuất dữ liệu (.json)', 'Toàn bộ trạng thái lần xếp này', exportJSON),
-    item('📥 Nhập lần xếp từ file', 'Đưa lần xếp cũ (file .json đã xuất, hoặc file trong data/sessions) lên đây', importSessions),
+    item(`🍎 Mở bài bằng: ${openMode().label}`, 'Bấm để đổi', cycleOpenMode),
+    LIST.songs.some((s) => s.guest) && item(`🤝 Bài kết hợp: ${LIST.excludeGuests ? 'không tính' : 'đang tính'}`, 'Bấm để đổi', toggleGuests),
+    missing ? item('🔄 Cập nhật Apple Music', `${missing} bài thiếu thông tin`, syncAllApple) : null,
+    item('⬇️ Tải kết quả', 'File .md', () => exportSession(S.id)),
+    item('💾 Sao lưu', 'File .json', exportJSON),
+    item('📥 Khôi phục từ file', 'Nhập file .json', importSessions),
   ), { wide: false });
 }
 /* ---------- Sửa tiêu đề & các hạng ---------- */
@@ -962,13 +969,13 @@ function openLabelEditor(focus = null) {
       field('Mô tả', draft.description, (v) => { draft.description = v; }, { area: true, key: 'description', max: 400 })),
     h('h3', { style: 'margin-top:18px' }, 'Các hạng'),
     h('div', { class: 'tier-edit-list' }, tierRows),
-    h('p', { class: 'muted' }, 'Bài đã xếp vẫn giữ nguyên hạng — chỉ đổi tên, mô tả và màu hiển thị.'),
+    h('p', { class: 'muted' }, 'Bài đã xếp vẫn giữ nguyên hạng.'),
     h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:6px' },
       h('button', { type: 'button', class: 'btn', onclick: closeModal }, 'Huỷ'),
       h('button', { type: 'submit', class: 'btn primary' }, 'Lưu')));
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    if (!draft.title.trim() || draft.tiers.some((t) => !t.name.trim())) return toast('Tiêu đề chính và tên các hạng không được để trống', 'warn');
+    if (!draft.title.trim() || draft.tiers.some((t) => !t.name.trim())) return toast('Tiêu đề và tên hạng không được để trống', 'warn');
     LIST.eyebrow = draft.eyebrow.trim();
     LIST.title = draft.title.trim();
     LIST.description = draft.description.trim();
@@ -979,7 +986,7 @@ function openLabelEditor(focus = null) {
     renderHeader();
     render();
     closeModal();
-    toast('✓ Đã lưu tiêu đề & các hạng', 'ok');
+    toast('✓ Đã lưu', 'ok');
   });
   openModal('🎨 Sửa tiêu đề & các hạng', form, { wide: true });
   setTimeout(() => {
@@ -1117,7 +1124,6 @@ async function openHistory() {
   let rows;
   try { rows = await api.get(`/api/sessions?list=${LIST.id}`); } catch (e) { body.replaceChildren(h('p', {}, `Lỗi: ${e.message}`)); return; }
   body.replaceChildren(
-    h('p', { class: 'muted' }, `Mỗi lần xếp được lưu ở data/sessions/ (JSON + bản .md dễ đọc) và nhật ký ở data/logs/.`),
     h('table', {},
       h('thead', {}, h('tr', {}, ['Lần xếp', 'Bắt đầu', 'Cập nhật', 'Tiến độ', ''].map((x) => h('th', {}, x)))),
       h('tbody', {}, rows.map((r) => h('tr', { class: r.id === S.id ? 'current' : '' },
@@ -1165,7 +1171,7 @@ function describeEvent(e) {
 }
 function openLog() {
   openModal(`📜 Nhật ký — ${S.name}`, h('div', {},
-    h('p', { class: 'muted' }, `${S.events.length} thao tác · cũng được ghi vào data/logs/${S.id}.jsonl`),
+    h('p', { class: 'muted' }, `${S.events.length} thao tác`),
     h('ul', { class: 'log-list' }, [...S.events].reverse().map((e) => h('li', {}, h('time', {}, fmtTime(e.t)), h('span', {}, describeEvent(e)))))), { wide: true });
 }
 
@@ -1208,8 +1214,7 @@ function openSongs() {
     h('div', { class: 'row', style: 'margin-bottom:10px' }, q),
     h('table', {},
       h('thead', {}, h('tr', {}, ['Bài', 'Nghệ sĩ', 'Album', 'Năm', 'Trạng thái', 'Apple', ''].map((x) => h('th', {}, x)))),
-      tbody),
-    h('p', { class: 'muted' }, 'Muốn sửa thông tin gốc (tên, album, năm…)? Sửa file data/lists/ngot-thang.json rồi tải lại trang. Single nào đã có trong một album của danh sách (trùng tên, hoặc Apple Music xác nhận) sẽ tự động bị bỏ qua — ưu tiên bản album.')), { wide: true });
+      tbody),), { wide: true });
   paint();
 }
 
@@ -1228,7 +1233,7 @@ document.addEventListener('keydown', (e) => {
     const t = LIST.tiers[Number(dm[2]) - 1];
     if (!t || rolling) return;
     if (S.current) place(S.current, t.id);
-    else toast('Chưa có bài trên khung rút — bấm Space để rút', 'warn');
+    else toast('Rút một bài trước đã', 'warn');
     return;
   }
   if (rolling) return;
@@ -1245,19 +1250,24 @@ document.addEventListener('keydown', (e) => {
     default:
   }
 });
-$('.controls').addEventListener('click', (e) => {
+$('.draw-card').addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]');
   if (!b || !S) return;
   b.blur();
-  ({
+  const act = b.dataset.act;
+  if (act === 'place') { if (S.current) place(S.current, b.dataset.tier); return; }
+  const actions = {
     draw: () => draw(false),
+    skip: () => draw(true),
+    remove: () => removeSong(S.current),
     vote: openVote,
     add: openAddSong,
-    remove: () => removeSong(S.current),
     rules: openRules,
     undo,
     menu: openMenu,
-  })[b.dataset.act]();
+    export: () => exportSession(S.id),
+  };
+  if (actions[act]) actions[act]();
 });
 $('#session-name').addEventListener('click', renameSession);
 

@@ -26,19 +26,18 @@
 
       <section class="panel draw-card">
         <header class="draw-head">
-          <span class="eyebrow">Bài tiếp theo</span>
+          <span class="eyebrow">Bài đang nghe</span>
           <span id="remaining" class="remaining"></span>
         </header>
         <div id="stage" class="stage empty"></div>
-        <p id="hint" class="hint"></p>
+        <div id="picker" class="picker" hidden></div>
         <nav class="controls">
-          <button class="ctl primary" data-act="draw" title="Rút bài (Shift+Space: trả bài đang nghe về & rút bài khác)">🎲 RÚT <kbd>Space</kbd></button>
-          <button class="ctl" data-act="vote" title="Vote với bạn bè">⏱ Vote <kbd>T</kbd></button>
-          <button class="ctl" data-act="add" title="Thêm bài">＋ Bài <kbd>A</kbd></button>
-          <button class="ctl" data-act="remove" title="Bỏ bài này (không thích / không xếp)">✕ Bỏ <kbd>X</kbd></button>
-          <button class="ctl" data-act="rules" title="Luật & phím tắt">Luật <kbd>C</kbd></button>
-          <button class="ctl" data-act="undo" title="Hoàn tác">↶ <kbd>Z</kbd></button>
-          <button class="ctl" data-act="menu" title="Menu: lịch sử, nhật ký, xuất kết quả…">⋯ <kbd>M</kbd></button>
+          <button class="ctl primary" id="draw-btn" data-act="draw" title="Rút bài (Space)">🎲 Rút bài</button>
+          <button class="ctl icon" data-act="undo" title="Hoàn tác (Z)" aria-label="Hoàn tác">↶</button>
+          <button class="ctl icon" data-act="vote" title="Vote cùng bạn bè (T)" aria-label="Vote">⏱</button>
+          <button class="ctl icon" data-act="add" title="Thêm bài (A)" aria-label="Thêm bài">＋</button>
+          <button class="ctl icon" data-act="rules" title="Cách chơi (C)" aria-label="Cách chơi">?</button>
+          <button class="ctl icon" data-act="menu" title="Menu (M)" aria-label="Menu">⋯</button>
         </nav>
       </section>
     </aside>

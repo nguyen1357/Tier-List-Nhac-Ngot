@@ -51,22 +51,13 @@ Bạn cũng xem được dữ liệu gốc trong D1 → `tierlist-nhac` → **Co
 
 ## Cách chơi
 
-| Phím | Tác dụng |
-|---|---|
-| `Space` | Rút bài tiếp theo (phải xếp xong bài đang nghe đã) |
-| `Shift + Space` | Trả bài đang nghe về bộ bài và rút bài khác |
-| `1`–`5` | Xếp bài đang nghe vào KẸO / NGỌT / CUỐN / CŨNG CŨNG / NHẠT |
-| Kéo thả | Xếp bài, đổi hạng, đổi thứ tự. Thả vào "Đã bỏ" để bỏ bài, thả lên khung rút để nghe lại |
-| Chuột phải vào ô | Đưa bài lên khung rút để nghe lại |
-| `X` | Bỏ bài này (không thích / không xếp) |
-| `O` / `P` | Mở bài trên Apple Music (mặc định mở bằng app desktop, đổi trong Menu → Mở Apple Music bằng) / nghe thử 30 giây |
-| `T` | Vote cùng bạn bè: đếm phiếu kèm đồng hồ, `Enter` để chốt |
-| `A` | Thêm bài (có cảnh báo nếu trùng tên) |
-| `Z` hoặc `Ctrl+Z` | Hoàn tác |
-| `C` | Xem luật và phím tắt |
-| Bấm vào chữ | Sửa trực tiếp tiêu đề, dòng nhỏ, mô tả, tên và mô tả từng hạng (`Enter` lưu, `Esc` huỷ) |
-| `E` hoặc nút 🎨 trên nhãn hạng | Mở bảng sửa đầy đủ, kể cả màu các hạng |
-| `M` | Menu: lần xếp mới, lịch sử, nhật ký, danh sách bài, xuất kết quả |
+1. Bấm **🎲 Rút bài** (hoặc Space).
+2. Nghe thử, hoặc mở bài trên Apple Music.
+3. Bấm vào một hạng để xếp bài.
+
+Mẹo: kéo bài trên bảng để đổi hạng, chuột phải vào bài để nghe lại, bấm vào tiêu đề hoặc tên hạng để sửa chữ.
+
+Phím tắt: `Space` rút bài · `1`–`5` xếp hạng · `X` bỏ bài · `Z` hoàn tác · `P` nghe thử · `O` mở Apple Music · `T` vote · `M` menu.
 
 ## Danh sách bài
 
