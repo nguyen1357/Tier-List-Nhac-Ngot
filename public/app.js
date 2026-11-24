@@ -338,7 +338,7 @@ function updateDrawButton() {
   const b = $('#draw-btn');
   if (!b || !S) return;
   b.textContent = S.drawMode === 'album' ? '⏭ Bài tiếp' : '🎲 Rút bài';
-  b.title = S.drawMode === 'album' ? 'Bài tiếp theo (N)' : 'Rút bài ngẫu nhiên (N)';
+  b.title = S.drawMode === 'album' ? 'Bài tiếp theo (Space)' : 'Rút bài ngẫu nhiên (Space)';
   b.classList.toggle('waiting', !!S.current);
   const sh = $('#shuffle-btn');
   sh.classList.toggle('on', S.drawMode !== 'album');
@@ -680,7 +680,7 @@ function renderStage() {
         h('button', { type: 'button', class: 'draw-cta', dataset: { act: 'draw' } },
           h('span', { class: 'draw-cta-icon' }, S.drawMode === 'album' ? '💿' : '🎲'),
           h('span', { class: 'draw-cta-text' }, S.drawMode === 'album' ? 'Bài tiếp theo' : 'Rút bài'),
-          h('small', {}, S.drawMode === 'album' ? 'lần lượt từng album' : 'bấm để rút ngẫu nhiên')),
+          h('small', {}, S.drawMode === 'album' ? 'lần lượt từng album · hoặc nhấn Space' : 'hoặc nhấn Space')),
         h('button', { type: 'button', class: 'link-btn choose-link', dataset: { act: 'choose' } },
           '☰ Chọn bài muốn nghe')));
     return;
@@ -935,7 +935,7 @@ function openRules() {
     'Bấm vào tiêu đề hoặc tên hạng để sửa chữ.',
   ];
   const keys = [
-    ['Space', 'Phát / dừng nghe thử'], ['N', 'Rút bài'], [`1 – ${LIST.tiers.length}`, 'Xếp vào hạng'], ['X', 'Bỏ bài'], ['Z', 'Hoàn tác'],
+    ['Space', 'Rút bài · phát / dừng nghe thử'], ['N', 'Rút bài'], [`1 – ${LIST.tiers.length}`, 'Xếp vào hạng'], ['X', 'Bỏ bài'], ['Z', 'Hoàn tác'],
     ['O', 'Mở Apple Music'], ['S', 'Bật/tắt ngẫu nhiên'], ['L', 'Chọn bài để nghe'], ['F', 'Menu nhạc'], ['M', 'Menu'],
   ];
   openModal('Cách chơi', h('div', { class: 'rules' },
@@ -1599,7 +1599,8 @@ document.addEventListener('keydown', (e) => {
   if (e.target.matches('input, textarea, select') || e.target.isContentEditable || !S) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (e.code === 'Space') { e.preventDefault(); if (S.current) togglePreview(); else toast('Bấm Rút bài để lấy một bài', 'warn'); return; }
+  // Space: chưa có bài -> rút bài; đang có bài -> phát / dừng nghe thử
+  if (e.code === 'Space') { e.preventDefault(); if (e.repeat) return; if (S.current && !e.shiftKey) togglePreview(); else draw(e.shiftKey); return; }
   const dm = /^(Digit|Numpad)(\d)$/.exec(e.code);
   if (dm) {
     const t = LIST.tiers[Number(dm[2]) - 1];
@@ -1620,7 +1621,6 @@ document.addEventListener('keydown', (e) => {
     case 'l': openPlaylist(); break;
     case 'f': openMusicMenu(); break;
     case 's': setDrawMode(S.drawMode === 'album' ? 'random' : 'album'); break;
-    case 'p': togglePreview(); break;
     case 'n': draw(e.shiftKey); break;
     default:
   }
