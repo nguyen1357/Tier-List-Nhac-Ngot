@@ -1325,6 +1325,7 @@ function describeEvent(e) {
     case 'add-song': return `＋ Thêm bài: ${s}`;
     case 'undo': return '↶ Hoàn tác';
     case 'rename': return `Đổi tên thành “${e.name}”`;
+    case 'delete-song': return `🗑 Xoá bài: ${e.title || e.song}`;
     case 'edit-labels': return '🎨 Sửa tiêu đề / các hạng';
     case 'finish': return '🎉 Xếp xong toàn bộ';
     case 'exclude-group': return `Không tính ${e.group}`;
@@ -1339,46 +1340,76 @@ function openLog() {
     h('ul', { class: 'log-list' }, [...S.events].reverse().map((e) => h('li', {}, h('time', {}, fmtTime(e.t)), h('span', {}, describeEvent(e)))))), { wide: true });
 }
 
+/** Xoá hẳn một bài khỏi danh sách (gỡ khỏi bảng nếu đang được xếp) */
+function deleteSong(id) {
+  const song = SONGS.get(id);
+  if (!song) return false;
+  const where = locate(id);
+  const note = where.zone === 'tier' ? ` Bài đang ở hạng ${tierById(where.tier).name} sẽ bị gỡ khỏi bảng.` : '';
+  if (!confirm(`Xoá “${displayTitle(song)}” khỏi danh sách?${note}`)) return false;
+  if (S.current === id) stopPreview();
+  LIST.songs = LIST.songs.filter((x) => x.id !== id);
+  for (const x of LIST.songs) if (x.duplicateOf === id) delete x.duplicateOf;
+  delete APPLE[id];
+  indexSongs();
+  normalizeSession(S);
+  saveList();
+  log({ type: 'delete-song', song: id, title: displayTitle(song) });
+  checkFinished();
+  save();
+  render();
+  toast(`Đã xoá “${displayTitle(song)}”`, 'ok');
+  return true;
+}
 function openSongs() {
   const q = h('input', { type: 'search', placeholder: 'Tìm bài, album, nghệ sĩ…', style: 'flex:1;min-width:200px' });
+  const count = h('span', { class: 'muted' });
   const tbody = h('tbody');
+  const delBtn = (id) => h('button', { type: 'button', class: 'btn sm danger', title: 'Xoá khỏi danh sách', onclick: () => { if (deleteSong(id)) paint(); } }, 'Xoá');
   function paint() {
     const term = norm(q.value);
+    count.textContent = `${ACTIVE.length} bài`;
     tbody.replaceChildren(...LIST.songs.filter((s) => !term || norm(`${s.title} ${s.short || ''} ${s.album} ${s.artist} ${s.feat || ''}`).includes(term)).map((s) => {
       const m = meta(s.id);
-      const a = APPLE[s.id];
       const l = locate(s.id);
       const t = l.zone === 'tier' ? tierById(l.tier) : null;
       const dup = s.duplicateOf && SONGS.get(s.duplicateOf);
+      const album = m.album && m.album !== 'Single' ? h('span', {}, m.albumShort, m.track ? h('span', { class: 'muted' }, ` · bài ${m.track}`) : null) : 'Single';
       if (!dup && !ACTIVE_SET.has(s.id)) {
-        return h('tr', { class: 'skipped' }, h('td', {}, h('b', {}, displayTitle(m)), h('div', { class: 'muted' }, `${s.demo ? 'Bài demo' : 'Bài kết hợp'} — đang không tính (bật lại trong Menu)`)),
-          h('td', {}, m.artist), h('td', {}, m.album), h('td', {}, m.year || '—'), h('td', {}, h('span', { class: 'tag' }, 'Không tính')), h('td', {}), h('td', {}));
+        return h('tr', { class: 'skipped' },
+          h('td', {}, h('b', {}, displayTitle(m)), h('div', { class: 'muted' }, 'Đang không tính')),
+          h('td', {}, m.artist), h('td', {}, album), h('td', {}, m.year || '—'),
+          h('td', {}, h('span', { class: 'tag' }, 'Không tính')), h('td', {}), h('td', { class: 'actions-cell' }, delBtn(s.id)));
       }
       if (dup) {
         return h('tr', { class: 'skipped' },
-          h('td', {}, h('b', {}, displayTitle(m)), h('div', { class: 'warn-text' }, `Bỏ qua — đã có trong album ${dup.album} (“${displayTitle(dup)}”)`)),
-          h('td', {}, m.artist), h('td', {}, m.album), h('td', {}, m.year || '—'),
+          h('td', {}, h('b', {}, displayTitle(m)), h('div', { class: 'warn-text' }, `Trùng bài trong album ${dup.album}`)),
+          h('td', {}, m.artist), h('td', {}, album), h('td', {}, m.year || '—'),
           h('td', {}, h('span', { class: 'tag' }, 'Bỏ qua')), h('td', {}),
-          h('td', {}, h('button', { class: 'btn sm', title: 'Nếu đây thực ra là bài khác, giữ lại để xếp', onclick: () => { keepDuplicate(s.id); paint(); } }, 'Vẫn giữ')));
+          h('td', { class: 'actions-cell' },
+            h('button', { type: 'button', class: 'btn sm', title: 'Đây là bài khác, giữ lại để xếp', onclick: () => { keepDuplicate(s.id); paint(); } }, 'Giữ'),
+            delBtn(s.id)));
       }
+      const url = m.appleUrl || m.appleSearch;
       return h('tr', { class: S.current === s.id ? 'current' : '' },
         h('td', {}, h('b', {}, displayTitle(m))),
         h('td', {}, m.artist),
-        h('td', {}, m.album, m.track ? h('span', { class: 'muted' }, ` #${m.track}`) : null),
+        h('td', {}, album),
         h('td', {}, m.year || '—'),
         h('td', {}, h('span', { class: 'tag', style: t ? `--c:${t.color};--t:${t.text}` : '' }, statusLabel(s.id))),
-        h('td', {}, a ? (a.found ? h('a', { href: m.appleUrl, target: '_blank', rel: 'noopener', 'data-apple': true }, '✓ mở') : h('span', { class: 'muted' }, 'không thấy')) : h('span', { class: 'muted' }, '—')),
-        h('td', {}, h('div', { class: 'row' },
-          S.current !== s.id ? h('button', { class: 'btn sm', onclick: () => { closeModal(); toStage(s.id); } }, 'Nghe lại') : null,
-          l.zone === 'removed' ? h('button', { class: 'btn sm', onclick: () => { restoreSong(s.id); paint(); } }, 'Trả về') : null)));
+        h('td', {}, h('a', { class: 'pill-link', href: url, target: '_blank', rel: 'noopener', 'data-apple': true, title: m.appleUrl ? 'Mở trên Apple Music' : 'Tìm trên Apple Music' }, m.appleUrl ? 'Mở ↗' : 'Tìm ↗')),
+        h('td', { class: 'actions-cell' },
+          l.zone === 'removed' ? h('button', { type: 'button', class: 'btn sm', onclick: () => { restoreSong(s.id); paint(); } }, 'Trả về') : null,
+          S.current !== s.id ? h('button', { type: 'button', class: 'btn sm', title: 'Đưa lên khung để nghe', onclick: () => { closeModal(); toStage(s.id); } }, 'Nghe') : null,
+          delBtn(s.id)));
     }));
   }
   q.addEventListener('input', paint);
-  openModal('🎵 Danh sách bài', h('div', {},
-    h('div', { class: 'row', style: 'margin-bottom:10px' }, q),
-    h('table', {},
+  openModal('Danh sách bài', h('div', {},
+    h('div', { class: 'row', style: 'margin-bottom:10px' }, q, count),
+    h('table', { class: 'songs-table' },
       h('thead', {}, h('tr', {}, ['Bài', 'Nghệ sĩ', 'Album', 'Năm', 'Trạng thái', 'Apple', ''].map((x) => h('th', {}, x)))),
-      tbody),), { wide: true });
+      tbody)), { wide: true });
   paint();
 }
 

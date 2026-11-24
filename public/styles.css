@@ -242,6 +242,13 @@ table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
 th { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); position: sticky; top: -18px; background: var(--cream); }
 tr.current td { background: #fff3ea; }
+.songs-table th { white-space: nowrap; }
+.songs-table td { white-space: nowrap; }
+.songs-table td:first-child { white-space: normal; min-width: 180px; }
+.actions-cell { text-align: right; }
+.actions-cell .btn + .btn { margin-left: 6px; }
+.pill-link { display: inline-block; font-size: 12px; font-weight: 800; color: var(--accent-deep); background: var(--accent-soft); padding: 3px 10px; border-radius: 99px; text-decoration: none; }
+.pill-link:hover { background: #fbdcc8; }
 tr.skipped td { opacity: .6; }
 tr.skipped td:last-child { opacity: 1; }
 .tag { display: inline-block; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 99px; background: var(--c, #f1e7df); color: var(--t, var(--ink)); white-space: nowrap; }
