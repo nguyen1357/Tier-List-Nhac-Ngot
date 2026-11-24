@@ -1,0 +1,734 @@
+{
+  "id": "ngot-thang",
+  "eyebrow": "TIER LIST NHẠC",
+  "title": "NGỌT & THẮNG",
+  "description": "ĐÂY LÀ TIER LIST NHẠC NGỌT & THẮNG CỦA MỘT KẸO CON, XẾP HẠNG THEO CẢM NHẬN VÀ Ý KIẾN RIÊNG CỦA THẰNG XẾP HẠNG.",
+  "tiers": [
+    {
+      "id": "keo",
+      "name": "KẸO",
+      "sub": "PHÊ như chơi ĐÁ",
+      "color": "#e0574c",
+      "text": "#ffffff"
+    },
+    {
+      "id": "ngot",
+      "name": "NGỌT",
+      "sub": "quá iconic",
+      "color": "#f08a4b",
+      "text": "#ffffff"
+    },
+    {
+      "id": "cuon",
+      "name": "CUỐN",
+      "sub": "Cũng cuốn nhưng chưa đến mức WTF",
+      "color": "#f3b65c",
+      "text": "#5a3a1c"
+    },
+    {
+      "id": "cung-cung",
+      "name": "CŨNG CŨNG",
+      "sub": "Cũng ổn nhưng chưa đủ wow",
+      "color": "#b7c98e",
+      "text": "#3d4a26"
+    },
+    {
+      "id": "nhat",
+      "name": "NHẠT",
+      "sub": "COULD'VE BEEN BETTER, maybe not my type",
+      "color": "#cdbdae",
+      "text": "#56443a"
+    }
+  ],
+  "songs": [
+    {
+      "id": "ban-tho-tivi-nho",
+      "title": "Bạn thỏ tivi nhỏ",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 1
+    },
+    {
+      "id": "may-khi",
+      "title": "Mấy Khi",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 2
+    },
+    {
+      "id": "em-trang-tri",
+      "title": "Em Trang Trí",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 3
+    },
+    {
+      "id": "diem-den-cuoi-cung",
+      "title": "Điểm Đến Cuối Cùng",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 4
+    },
+    {
+      "id": "em-trong-dau",
+      "title": "Em Trong Đầu",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 5
+    },
+    {
+      "id": "chao-buoi-sang",
+      "title": "Chào Buổi Sáng",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 6
+    },
+    {
+      "id": "thay-chua",
+      "title": "Thấy Chưa",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 7
+    },
+    {
+      "id": "da-tan",
+      "title": "Đá tan",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 8
+    },
+    {
+      "id": "dem-hom-qua",
+      "title": "Đêm Hôm Qua",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 9
+    },
+    {
+      "id": "gieo",
+      "title": "Gieo",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 10
+    },
+    {
+      "id": "mat-tich",
+      "title": "Mất Tích",
+      "artist": "Ngọt",
+      "album": "Gieo",
+      "year": 2022,
+      "track": 11
+    },
+    {
+      "id": "mau-den-trang",
+      "title": "MÀU (đen trắng)",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 1
+    },
+    {
+      "id": "meu-mao-t-t",
+      "title": "MẾU MÁO (T.T)",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 2
+    },
+    {
+      "id": "em-co-chac-khong",
+      "title": "EM CÓ CHẮC KHÔNG (?) (bài ca rebound)",
+      "short": "EM CÓ CHẮC KHÔNG (?)",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 3
+    },
+    {
+      "id": "gia-vo",
+      "title": "GIẢ VỜ",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 4
+    },
+    {
+      "id": "chuong-bao-thuc-sang-roi",
+      "title": "CHUÔNG BÁO THỨC (sáng rồi)",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 5
+    },
+    {
+      "id": "du-bao-thoi-tiet",
+      "title": "(sau đây là) DỰ BÁO THỜI TIẾT (cho các vùng vào ngày mai)",
+      "short": "DỰ BÁO THỜI TIẾT",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 6
+    },
+    {
+      "id": "chuyen-kenh",
+      "title": "CHUYỂN KÊNH (sản phẩm này không phải là thuốc)",
+      "short": "CHUYỂN KÊNH",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 7
+    },
+    {
+      "id": "het-thoi",
+      "title": "HẾT THỜI",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 8
+    },
+    {
+      "id": "ve-di-thien-duong-mot-chieu",
+      "title": "VÉ ĐI THIÊN ĐƯỜNG (một chiều)",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 9
+    },
+    {
+      "id": "toi-di-tru-dong",
+      "title": "(tôi) ĐI TRÚ ĐÔNG",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 10
+    },
+    {
+      "id": "be",
+      "title": "(bé)",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 11
+    },
+    {
+      "id": "lan-cuoi",
+      "title": "LẦN CUỐI (đi bên em xót xa người ơi)",
+      "short": "LẦN CUỐI",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 12
+    },
+    {
+      "id": "nut",
+      "title": "NỨT (đôi chân đôi tay đôi mắt trái tim)",
+      "short": "NỨT",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 13
+    },
+    {
+      "id": "ru-minh",
+      "title": "RU MÌNH",
+      "artist": "Ngọt",
+      "album": "3 (tuyển tập nhạc Ngọt mới trẻ sôi động 2019)",
+      "albumShort": "3",
+      "year": 2019,
+      "track": 14
+    },
+    {
+      "id": "vi-ai",
+      "title": "Vì Ai",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 1
+    },
+    {
+      "id": "cho-toi-di-theo",
+      "title": "Cho Tôi Đi Theo",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 2
+    },
+    {
+      "id": "ca-hoi",
+      "title": "Cá Hồi",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 3
+    },
+    {
+      "id": "be-cool",
+      "title": "Be Cool",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 4
+    },
+    {
+      "id": "xanh",
+      "title": "Xanh",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 5
+    },
+    {
+      "id": "a-oi",
+      "title": "À Ơi",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 6
+    },
+    {
+      "id": "nhung-chuyen-phieu-luu",
+      "title": "Những Chuyến Phiêu Lưu",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 7
+    },
+    {
+      "id": "khap-xung-quanh",
+      "title": "Khắp Xung Quanh",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 8
+    },
+    {
+      "id": "khong-lam-gi",
+      "title": "Không Làm Gì",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 9
+    },
+    {
+      "id": "drama-queen",
+      "title": "Drama Queen",
+      "artist": "Ngọt",
+      "album": "Ngọt",
+      "year": 2016,
+      "track": 10
+    },
+    {
+      "id": "xin-cho-toi",
+      "title": "Xin Cho Tôi",
+      "artist": "Ngọt",
+      "album": "Ng'bthg",
+      "year": 2016,
+      "track": 1
+    },
+    {
+      "id": "cho",
+      "title": "Cho",
+      "artist": "Ngọt",
+      "album": "Ng'bthg",
+      "year": 2016,
+      "track": 2
+    },
+    {
+      "id": "kho-bau",
+      "title": "Kho Báu",
+      "artist": "Ngọt",
+      "album": "Ng'bthg",
+      "year": 2016,
+      "track": 3
+    },
+    {
+      "id": "ke-thu",
+      "title": "Kẻ Thù",
+      "artist": "Ngọt",
+      "album": "Ng'bthg",
+      "year": 2016,
+      "track": 4
+    },
+    {
+      "id": "bartender",
+      "title": "Bartender",
+      "artist": "Ngọt",
+      "album": "Ng'bthg",
+      "year": 2016,
+      "track": 5
+    },
+    {
+      "id": "meo-hoang",
+      "title": "Mèo Hoang",
+      "artist": "Ngọt",
+      "album": "Ng'bthg",
+      "year": 2016,
+      "track": 6
+    },
+    {
+      "id": "em-dao-nay",
+      "title": "Em Dạo Này",
+      "artist": "Ngọt",
+      "album": "Ng'bthg",
+      "year": 2016,
+      "track": 7
+    },
+    {
+      "id": "mot-ngay-khong-mua",
+      "title": "Một Ngày Không Mưa",
+      "artist": "Ngọt",
+      "album": "Ng'bthg",
+      "year": 2016,
+      "track": 8
+    },
+    {
+      "id": "quen-lam",
+      "title": "Quen Lắm",
+      "artist": "Ngọt",
+      "album": "Suýt 2",
+      "year": 2024,
+      "track": 1
+    },
+    {
+      "id": "chieu-ho-tay",
+      "title": "Chiều Hồ Tây",
+      "artist": "Ngọt",
+      "album": "Suýt 2",
+      "year": 2024,
+      "track": 2
+    },
+    {
+      "id": "leo-deo",
+      "title": "Leo Đèo",
+      "artist": "Ngọt",
+      "album": "Suýt 2",
+      "year": 2024,
+      "track": 3
+    },
+    {
+      "id": "chuyen-thuong",
+      "title": "Chuyện Thường",
+      "artist": "Ngọt",
+      "album": "Suýt 2",
+      "year": 2024,
+      "track": 4
+    },
+    {
+      "id": "chuyen-do-dang",
+      "title": "Chuyện Dở Dang",
+      "artist": "Ngọt",
+      "album": "Suýt 1",
+      "year": 2024,
+      "track": 1
+    },
+    {
+      "id": "mo-lam-ma",
+      "title": "Mơ Làm Ma",
+      "artist": "Ngọt",
+      "feat": "Tho Trauma",
+      "album": "Suýt 1",
+      "year": 2024,
+      "track": 2
+    },
+    {
+      "id": "hay-la",
+      "title": "Hay Là",
+      "artist": "Ngọt",
+      "album": "Suýt 1",
+      "year": 2024,
+      "track": 3
+    },
+    {
+      "id": "thap-huong-hoa-vang",
+      "title": "Thắp Hương / Hoá Vàng",
+      "artist": "Ngọt",
+      "album": "Suýt 1",
+      "year": 2024,
+      "track": 4
+    },
+    {
+      "id": "de-quen",
+      "title": "để quên",
+      "artist": "Ngọt",
+      "album": "Single",
+      "year": 2021
+    },
+    {
+      "id": "dot",
+      "title": "Đốt",
+      "artist": "Ngọt",
+      "album": "Single",
+      "year": 2021
+    },
+    {
+      "id": "tim-nguoi-nha",
+      "title": "Tìm Người Nhà",
+      "artist": "Ngọt",
+      "album": "Single",
+      "year": 2020
+    },
+    {
+      "id": "khoc-day",
+      "title": "Khóc Đấy",
+      "artist": "Thắng",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 1
+    },
+    {
+      "id": "but-chi-bac",
+      "title": "Bút Chì Bạc",
+      "artist": "Thắng",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 2
+    },
+    {
+      "id": "hoa-ra-la",
+      "title": "Hoá Ra Là",
+      "artist": "Thắng",
+      "feat": "Wala",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 3
+    },
+    {
+      "id": "goi-dau",
+      "title": "Gội Đầu",
+      "artist": "Thắng",
+      "feat": "Hà Lê",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 4
+    },
+    {
+      "id": "100-phan-tram",
+      "title": "100%",
+      "artist": "Thắng",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 5
+    },
+    {
+      "id": "can-gac-lang",
+      "title": "Căn Gác Lặng",
+      "artist": "Thắng",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 6
+    },
+    {
+      "id": "dong-y",
+      "title": "Đồng Ý",
+      "artist": "Thắng",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 7
+    },
+    {
+      "id": "60m-vuong",
+      "title": "60m Vuông",
+      "artist": "Thắng",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 8
+    },
+    {
+      "id": "nau-con-beat",
+      "title": "Nấu Con Beat",
+      "artist": "Thắng",
+      "feat": "Wala",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 9
+    },
+    {
+      "id": "rat",
+      "title": "Rất",
+      "artist": "Thắng",
+      "feat": "SUNI, Pixel Neko",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 10
+    },
+    {
+      "id": "sang-ra-chi-can",
+      "title": "Sáng Ra Chỉ Cần",
+      "artist": "Kế Phúc",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 11
+    },
+    {
+      "id": "tinh-nhan-muon-kiep",
+      "title": "Tình Nhân Muôn Kiếp",
+      "artist": "Thắng",
+      "album": "Cái Thứ Hai",
+      "year": 2026,
+      "track": 12
+    },
+    {
+      "id": "sober-song",
+      "title": "Sober Song",
+      "artist": "Thắng",
+      "album": "Cái Đầu Tiên",
+      "year": 2023,
+      "track": 1
+    },
+    {
+      "id": "truoc-khi-em-ton-tai",
+      "title": "Trước Khi Em Tồn Tại",
+      "artist": "Thắng",
+      "album": "Cái Đầu Tiên",
+      "year": 2023,
+      "track": 2
+    },
+    {
+      "id": "limo",
+      "title": "Limo",
+      "artist": "Thắng",
+      "album": "Cái Đầu Tiên",
+      "year": 2023,
+      "track": 3
+    },
+    {
+      "id": "tinkerbell",
+      "title": "Tinkerbell",
+      "artist": "Thắng",
+      "album": "Cái Đầu Tiên",
+      "year": 2023,
+      "track": 4
+    },
+    {
+      "id": "mat-thoi-gian",
+      "title": "Mất Thời Gian",
+      "artist": "Thắng",
+      "album": "Cái Đầu Tiên",
+      "year": 2023,
+      "track": 5
+    },
+    {
+      "id": "save-it-for-your-boyfriends",
+      "title": "Save it for your boyfriends",
+      "artist": "Thắng",
+      "album": "Cái Đầu Tiên",
+      "year": 2023,
+      "track": 6
+    },
+    {
+      "id": "phai-long",
+      "title": "Phải Lòng",
+      "artist": "Thắng",
+      "feat": "Limebócx",
+      "album": "Cái Đầu Tiên",
+      "year": 2023,
+      "track": 7
+    },
+    {
+      "id": "xin-loi",
+      "title": "Xin Lỗi",
+      "artist": "Thắng",
+      "album": "Cái Đầu Tiên",
+      "year": 2023,
+      "track": 8
+    },
+    {
+      "id": "giay-trang",
+      "title": "Giấy Trắng",
+      "artist": "Thắng",
+      "feat": "Thịnh Suy",
+      "album": "Giấy Trắng (EP)",
+      "albumShort": "Giấy Trắng",
+      "year": 2022,
+      "track": 1
+    },
+    {
+      "id": "viet-nhac-cua-em",
+      "title": "Viết Nhạc Cưa Em",
+      "artist": "Thắng",
+      "feat": "Pixel Neko",
+      "album": "Giấy Trắng (EP)",
+      "albumShort": "Giấy Trắng",
+      "year": 2022,
+      "track": 2
+    },
+    {
+      "id": "mua-giua-bai",
+      "title": "Mưa Giữa Bài",
+      "artist": "Thắng",
+      "feat": "NÂN",
+      "album": "Giấy Trắng (EP)",
+      "albumShort": "Giấy Trắng",
+      "year": 2022,
+      "track": 3
+    },
+    {
+      "id": "co-xa-nhau",
+      "title": "Cố Xa Nhau",
+      "artist": "Thắng",
+      "album": "Giấy Trắng (EP)",
+      "albumShort": "Giấy Trắng",
+      "year": 2022,
+      "track": 4
+    },
+    {
+      "id": "an-than",
+      "title": "An Thần",
+      "artist": "Low G & Thắng",
+      "album": "Single",
+      "year": 2021
+    },
+    {
+      "id": "de-no-den",
+      "title": "Để Nó Đến",
+      "artist": "Thắng",
+      "album": "Single",
+      "year": 2024
+    },
+    {
+      "id": "huong-duong",
+      "title": "Hướng Dương",
+      "artist": "Thắng",
+      "album": "Single",
+      "year": 2024
+    },
+    {
+      "id": "no",
+      "title": "Nó",
+      "artist": "Thắng",
+      "feat": "Datmaniac",
+      "album": "Single",
+      "year": 2024
+    },
+    {
+      "id": "nguoi-yeu-co-ban-gai",
+      "title": "Người Yêu Có Bạn Gái",
+      "artist": "Đồng Lan & Thắng",
+      "album": "Single",
+      "year": 2024
+    }
+  ]
+}

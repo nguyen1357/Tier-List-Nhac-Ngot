@@ -1,0 +1,97 @@
+# TIER LIST NHẠC — NGỌT & THẮNG
+
+Web xếp tier list nhạc Ngọt & Thắng: rút từng bài, nghe, rồi xếp vào 5 hạng KẸO / NGỌT / CUỐN / CŨNG CŨNG / NHẠT.
+Mỗi lần xếp được lưu lại, kèm nhật ký từng thao tác.
+
+Có 2 cách chạy, cùng một bộ code:
+
+| | Chạy local | Cloudflare Pages |
+|---|---|---|
+| Cần gì | Node.js 18+ | Tài khoản Cloudflare (miễn phí) |
+| Địa chỉ | `http://localhost:5173` | `https://<ten-project>.pages.dev`, không cần mua tên miền |
+| Dữ liệu lưu ở | thư mục `data/` | Cloudflare D1 (database miễn phí) |
+
+## 1. Chạy local
+
+```bash
+node server.js
+```
+
+Mở **http://localhost:5173**. Không cần `npm install`. Đổi cổng: `PORT=8080 node server.js`. Bật mật khẩu: `APP_PASSWORD=matkhau node server.js`.
+
+## 2. Deploy lên Cloudflare Pages (không cần tên miền)
+
+1. Đăng nhập [dash.cloudflare.com](https://dash.cloudflare.com).
+2. **Tạo database:** vào **Storage & Databases → D1 SQL Database → Create**, đặt tên `tierlist-nhac`. Không cần tạo bảng, web tự tạo ở lần chạy đầu.
+3. **Tạo project:** vào **Workers & Pages → Create → Pages → Connect to Git**, chọn repo này, rồi điền:
+   - Framework preset: `None`
+   - Build command: `npm run build`
+   - Build output directory: `public`
+
+   Bấm **Save and Deploy**.
+4. **Gắn database:** vào project → **Settings → Bindings → Add → D1 database**:
+   - Variable name: `DB` (viết hoa, đúng như vậy)
+   - D1 database: `tierlist-nhac`
+5. **Đặt mật khẩu (nên làm):** vào **Settings → Variables and Secrets → Add**, kiểu *Secret*, tên `APP_PASSWORD`, giá trị là mật khẩu bạn muốn.
+   Nếu không đặt, ai có link cũng xem và sửa được tier list của bạn.
+6. Vào tab **Deployments**, bấm **Retry deployment** (hoặc push một commit mới) để các thiết lập ở bước 4 và 5 có hiệu lực.
+
+Xong. Web chạy ở `https://<ten-project>.pages.dev`. Từ giờ mỗi lần push lên GitHub, Cloudflare tự deploy lại.
+
+**Xem dữ liệu trên Cloudflare:** trong web vào Menu → Lịch sử / Nhật ký / Xuất kết quả (.md).
+Bạn cũng xem được dữ liệu gốc trong D1 → `tierlist-nhac` → **Console**, ví dụ:
+`SELECT seq, t, type, json FROM events ORDER BY session_id, seq;`
+
+## Cách chơi
+
+| Phím | Tác dụng |
+|---|---|
+| `Space` | Rút bài tiếp theo (phải xếp xong bài đang nghe đã) |
+| `Shift + Space` | Trả bài đang nghe về bộ bài và rút bài khác |
+| `1`–`5` | Xếp bài đang nghe vào KẸO / NGỌT / CUỐN / CŨNG CŨNG / NHẠT |
+| Kéo thả | Xếp bài, đổi hạng, đổi thứ tự. Thả vào "Đã bỏ" để bỏ bài, thả lên khung rút để nghe lại |
+| Chuột phải vào ô | Đưa bài lên khung rút để nghe lại |
+| `X` | Bỏ bài này (không thích / không xếp) |
+| `O` / `P` | Mở bài trên Apple Music (mặc định mở bằng app desktop, đổi trong Menu → Mở Apple Music bằng) / nghe thử 30 giây |
+| `T` | Vote cùng bạn bè: đếm phiếu kèm đồng hồ, `Enter` để chốt |
+| `A` | Thêm bài (có cảnh báo nếu trùng tên) |
+| `Z` hoặc `Ctrl+Z` | Hoàn tác |
+| `C` | Xem luật và phím tắt |
+| `M` | Menu: lần xếp mới, lịch sử, nhật ký, danh sách bài, xuất kết quả |
+
+## Danh sách bài
+
+83 bài phòng thu, lấy từ Apple Music theo các album và single bạn chọn:
+
+- **Ngọt (54 bài):**
+  - Album *Ngọt*, *Ng'bthg*, *3*, *Gieo*.
+  - EP *Suýt 1*, *Suýt 2*.
+  - Single *để quên*, *Đốt*, *Tìm Người Nhà*.
+- **Thắng (24 bài):** album *Cái Đầu Tiên*, *Cái Thứ Hai* và EP *Giấy Trắng*. Trong *Cái Thứ Hai* có bài *Sáng Ra Chỉ Cần* được Apple ghi là Kế Phúc hát.
+- **Single (5 bài):** *Để Nó Đến*, *Hướng Dương*, *Nó*, *Người Yêu Có Bạn Gái* (Đồng Lan & Thắng), *An Thần* (Low G & Thắng).
+
+Những bản bỏ qua để tránh trùng:
+- Single đã nằm trong album: Mấy Khi, Thấy Chưa, Em Trang Trí, LẦN CUỐI, CHUYỂN KÊNH, Khóc Đấy, Bút Chì Bạc, Đồng Ý, Gội Đầu.
+- EP *Cñgđc*: thu lại các bài trong Ng'bthg.
+- *Ở Đài Truyền Hình*: bản thu live.
+- Mọi bản demo và bản live khác.
+
+**Sửa danh sách:** sửa `data/lists/ngot-thang.json`, rồi chạy `npm run build` để cập nhật `lib/seed-data.js`. Cloudflare cũng tự chạy lệnh này khi deploy.
+Lưu ý: trên Cloudflare, nếu bạn đã thêm bài bằng phím `A` thì danh sách được lưu riêng trong D1 (bảng `lists`) và sẽ được dùng thay cho file. Muốn quay về danh sách trong file, xoá dòng đó trong bảng `lists`.
+
+## Cấu trúc code
+
+```
+public/              giao diện (HTML, CSS, JS, hoa văn nền)
+lib/core.js          logic chung: chống trùng, tra Apple Music, xuất Markdown
+lib/api.js           API /api/* (chuẩn Request/Response, dùng chung Node & Cloudflare)
+lib/store-fs.js      lưu vào thư mục data/ (chạy local)
+lib/store-d1.js      lưu vào Cloudflare D1 (tự tạo bảng)
+lib/seed-data.js     danh sách bài + dữ liệu Apple Music đóng gói sẵn (tự sinh, đừng sửa tay)
+functions/api/       Cloudflare Pages Function
+server.js            server Node cho chạy local
+data/lists/          danh sách bài gốc
+data/apple-cache.json  link, năm, ảnh bìa, bản nghe thử từ Apple Music
+```
+
+Khi chạy local, mỗi lần xếp lưu ở `data/sessions/<id>.json` (kèm bản `.md` dễ đọc) và nhật ký ở `data/logs/<id>.jsonl`. Các file này không được đưa lên Git.

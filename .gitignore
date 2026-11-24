@@ -1,0 +1,12 @@
+node_modules/
+.wrangler/
+.dev.vars
+*.tmp
+.DS_Store
+Thumbs.db
+
+# dữ liệu các lần xếp khi chạy local — riêng của từng máy
+data/sessions/*
+!data/sessions/.gitkeep
+data/logs/*
+!data/logs/.gitkeep
