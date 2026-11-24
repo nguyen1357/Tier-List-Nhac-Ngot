@@ -57,7 +57,9 @@ Bạn cũng xem được dữ liệu gốc trong D1 → `tierlist-nhac` → **Co
 
 Mẹo: kéo bài trên bảng để đổi hạng, chuột phải vào bài để nghe lại, bấm vào tiêu đề hoặc tên hạng để sửa chữ.
 
-Phím tắt: `Space` rút bài · `1`–`5` xếp hạng · `X` bỏ bài · `Z` hoàn tác · `P` nghe thử · `O` mở Apple Music · `T` vote · `M` menu.
+Rút bài **🔀 ngẫu nhiên** hoặc **💿 theo album** (album xếp theo năm ra mắt): bấm nút ở trên khung rút bài để đổi. Bấm **☰** để chọn album, EP hoặc bài muốn xếp trước.
+
+Phím tắt: `Space` rút bài · `1`–`5` xếp hạng · `X` bỏ bài · `Z` hoàn tác · `P` nghe thử · `O` mở Apple Music · `T` vote · `L` chọn bài xếp trước · `M` menu.
 
 ## Danh sách bài
 

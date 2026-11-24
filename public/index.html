@@ -27,7 +27,11 @@
       <section class="panel draw-card">
         <header class="draw-head">
           <span class="eyebrow">Bài đang nghe</span>
-          <span id="remaining" class="remaining"></span>
+          <span class="head-chips">
+            <button type="button" id="queue-chip" class="chip-btn queue" data-act="choose" title="Bài đã chọn xếp trước" hidden></button>
+            <button type="button" id="mode-chip" class="chip-btn" data-act="mode" title="Đổi cách rút bài"></button>
+            <span id="remaining" class="remaining"></span>
+          </span>
         </header>
         <div id="stage" class="stage empty"></div>
         <div id="picker" class="picker" hidden></div>
@@ -35,6 +39,7 @@
           <button class="ctl primary" id="draw-btn" data-act="draw" title="Rút bài (Space)">🎲 Rút bài</button>
           <button class="ctl icon" data-act="undo" title="Hoàn tác (Z)" aria-label="Hoàn tác">↶</button>
           <button class="ctl icon" data-act="vote" title="Vote cùng bạn bè (T)" aria-label="Vote">⏱</button>
+          <button class="ctl icon" data-act="choose" title="Chọn bài xếp trước (L)" aria-label="Chọn bài xếp trước">☰</button>
           <button class="ctl icon" data-act="add" title="Thêm bài (A)" aria-label="Thêm bài">＋</button>
           <button class="ctl icon" data-act="rules" title="Cách chơi (C)" aria-label="Cách chơi">?</button>
           <button class="ctl icon" data-act="menu" title="Menu (M)" aria-label="Menu">⋯</button>
