@@ -1479,7 +1479,6 @@ function pickSong(id) {
   commit({ type: 'pick', song: id, replaced: prev || undefined, from: from.tier || from.zone }, () => { detach(id); S.current = id; });
   S.deferred = S.deferred.filter((x) => x !== id);
   ensureApple(id, false, true);
-  if (meta(id).preview) togglePreview();
   if (prev) toast(`“${displayTitle(SONGS.get(prev))}” đã trở về bộ bài`);
 }
 function openPlaylist() {
