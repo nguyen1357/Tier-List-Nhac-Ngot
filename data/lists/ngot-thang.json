@@ -19,6 +19,13 @@
       "text": "#ffffff"
     },
     {
+      "id": "hay",
+      "name": "HAY",
+      "sub": "Nghe là thấy hay",
+      "color": "#e8849a",
+      "text": "#ffffff"
+    },
+    {
       "id": "cuon",
       "name": "CUỐN",
       "sub": "Cũng cuốn nhưng chưa đến mức WTF",

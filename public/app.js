@@ -556,7 +556,7 @@ function renderBoard() {
         h('button', { type: 'button', class: 'tier-color-btn', dataset: { tier: t.id }, title: 'Đổi màu hạng', 'aria-label': 'Đổi màu hạng' }, '🎨'),
         S.tiers[t.id].length ? h('span', { class: 'tier-count' }, S.tiers[t.id].length) : null),
       zone);
-  }));
+  }), h('button', { type: 'button', class: 'add-tier', onclick: addTierQuick, title: 'Thêm một hạng mới' }, '＋ Thêm hạng'));
   const rz = $('#removed');
   rz.replaceChildren(
     h('span', { class: 'label' }, `Đã bỏ (${S.removed.length})`),
@@ -912,7 +912,7 @@ function openMenu() {
     item('🗂 Lịch sử', 'Mở lại các lần xếp trước', openHistory),
     item('🎵 Danh sách bài', `${ACTIVE.length} bài`, openSongs),
     item('📜 Nhật ký', `${S.events.length} thao tác`, openLog),
-    item('🎨 Sửa tiêu đề & hạng', 'Tên, mô tả, màu', () => openLabelEditor()),
+    item('🎨 Sửa tiêu đề & hạng', 'Tên, màu, thêm hoặc xoá hạng', () => openLabelEditor()),
     item('✏️ Đổi tên lần xếp', S.name, renameSession),
     item(`🍎 Mở bài bằng: ${openMode().label}`, 'Bấm để đổi', cycleOpenMode),
     LIST.songs.some((s) => s.guest) && item(`🤝 Bài kết hợp: ${LIST.excludeGuests ? 'không tính' : 'đang tính'}`, 'Bấm để đổi', toggleGuests),
@@ -928,6 +928,32 @@ function idealText(hex) {
   const r = (n >> 16) & 255; const g = (n >> 8) & 255; const b = n & 255;
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.68 ? '#4a3227' : '#ffffff';
 }
+const TIER_COLORS = ['#e0574c', '#f08a4b', '#e8849a', '#f3b65c', '#b7c98e', '#8fb8c9', '#a99bd1', '#cdbdae'];
+function newTier(existing, name = 'HẠNG MỚI') {
+  const used = new Set(existing.map((t) => t.id));
+  let id = slug(name) || 'hang';
+  for (let n = 2; used.has(id); n++) id = `${slug(name) || 'hang'}-${n}`;
+  const color = TIER_COLORS.find((c) => !existing.some((t) => t.color === c)) || TIER_COLORS[existing.length % TIER_COLORS.length];
+  return { id, name, sub: '', color, text: idealText(color) };
+}
+/** Áp dụng danh sách hạng mới cho lần xếp đang mở (bài ở hạng bị xoá trở lại bộ bài) */
+function applyTiers(tiers) {
+  LIST.tiers = tiers;
+  normalizeSession(S);
+  saveList();
+  log({ type: 'edit-labels' });
+  checkFinished();
+  save();
+  renderHeader();
+  render();
+}
+function addTierQuick() {
+  if (!S || inlineEditing()) return;
+  const t = newTier(LIST.tiers);
+  applyTiers([...LIST.tiers, t]);
+  const el = $(`.tier-name[data-tier="${t.id}"]`);
+  if (el) { el.scrollIntoView({ block: 'nearest' }); startInlineEdit(el); }
+}
 function openLabelEditor(focus = null) {
   const draft = {
     eyebrow: LIST.eyebrow, title: LIST.title, description: LIST.description,
@@ -940,27 +966,44 @@ function openLabelEditor(focus = null) {
     input.addEventListener('input', () => onInput(input.value));
     return h('label', { class: 'full' }, label, input);
   };
-  const tierRows = draft.tiers.map((t, i) => {
-    const preview = h('div', { class: 'tier-label edit-preview', style: `--c:${t.color};--t:${t.text}` },
-      h('span', { class: 'tier-num' }, i + 1), h('div', { class: 'tier-name' }, t.name), h('div', { class: 'tier-sub' }, t.sub));
-    const paint = () => {
-      preview.style.setProperty('--c', t.color);
-      preview.style.setProperty('--t', t.text);
-      preview.querySelector('.tier-name').textContent = t.name || '…';
-      preview.querySelector('.tier-sub').textContent = t.sub;
-    };
-    const name = h('input', { type: 'text', value: t.name, maxlength: 30, placeholder: 'Tên hạng', dataset: { key: `tier-${t.id}` } });
-    name.addEventListener('input', () => { t.name = name.value; paint(); });
-    const sub = h('input', { type: 'text', value: t.sub, maxlength: 80, placeholder: 'Dòng mô tả' });
-    sub.addEventListener('input', () => { t.sub = sub.value; paint(); });
-    const color = h('input', { type: 'color', value: t.color, title: 'Màu hạng' });
-    color.addEventListener('input', () => { t.color = color.value; t.text = idealText(color.value); paint(); });
-    return h('div', { class: 'tier-edit' }, preview,
-      h('div', { class: 'tier-edit-fields' },
-        h('label', {}, `Hạng ${i + 1}`, name),
-        h('label', {}, 'Mô tả', sub)),
-      h('label', { class: 'tier-edit-color' }, 'Màu', color));
-  });
+  const list = h('div', { class: 'tier-edit-list' });
+  const move = (i, d) => { const j = i + d; if (j < 0 || j >= draft.tiers.length) return; [draft.tiers[i], draft.tiers[j]] = [draft.tiers[j], draft.tiers[i]]; paintRows(); };
+  const removeAt = (i) => {
+    if (draft.tiers.length <= 1) return toast('Cần ít nhất 1 hạng', 'warn');
+    const t = draft.tiers[i];
+    const n = (S.tiers[t.id] || []).length;
+    if (n && !confirm(`Xoá hạng ${t.name}? ${n} bài trong hạng này sẽ trở lại bộ bài.`)) return;
+    draft.tiers.splice(i, 1);
+    paintRows();
+  };
+  function paintRows() {
+    list.replaceChildren(...draft.tiers.map((t, i) => {
+      const preview = h('div', { class: 'tier-label edit-preview', style: `--c:${t.color};--t:${t.text}` },
+        h('span', { class: 'tier-num' }, i + 1), h('div', { class: 'tier-name' }, t.name), h('div', { class: 'tier-sub' }, t.sub));
+      const paint = () => {
+        preview.style.setProperty('--c', t.color);
+        preview.style.setProperty('--t', t.text);
+        preview.querySelector('.tier-name').textContent = t.name || '…';
+        preview.querySelector('.tier-sub').textContent = t.sub;
+      };
+      const name = h('input', { type: 'text', value: t.name, maxlength: 30, placeholder: 'Tên hạng', dataset: { key: `tier-${t.id}` } });
+      name.addEventListener('input', () => { t.name = name.value; paint(); });
+      const sub = h('input', { type: 'text', value: t.sub, maxlength: 80, placeholder: 'Mô tả' });
+      sub.addEventListener('input', () => { t.sub = sub.value; paint(); });
+      const color = h('input', { type: 'color', value: t.color, title: 'Màu' });
+      color.addEventListener('input', () => { t.color = color.value; t.text = idealText(color.value); paint(); });
+      return h('div', { class: 'tier-edit' }, preview,
+        h('div', { class: 'tier-edit-fields' },
+          h('label', {}, `Hạng ${i + 1}`, name),
+          h('label', {}, 'Mô tả', sub)),
+        h('div', { class: 'tier-edit-tools' },
+          h('label', { class: 'tier-edit-color', title: 'Màu' }, color),
+          h('button', { type: 'button', class: 'icon-btn', title: 'Lên trên', disabled: i === 0, onclick: () => move(i, -1) }, '↑'),
+          h('button', { type: 'button', class: 'icon-btn', title: 'Xuống dưới', disabled: i === draft.tiers.length - 1, onclick: () => move(i, 1) }, '↓'),
+          h('button', { type: 'button', class: 'icon-btn danger', title: 'Xoá hạng', onclick: () => removeAt(i) }, '✕')));
+    }));
+  }
+  paintRows();
   const form = h('form', { class: 'label-editor' },
     h('h3', {}, 'Tiêu đề'),
     h('div', { class: 'form' },
@@ -968,9 +1011,12 @@ function openLabelEditor(focus = null) {
       field('Tiêu đề chính', draft.title, (v) => { draft.title = v; }, { key: 'title', max: 60 }),
       field('Mô tả', draft.description, (v) => { draft.description = v; }, { area: true, key: 'description', max: 400 })),
     h('h3', { style: 'margin-top:18px' }, 'Các hạng'),
-    h('div', { class: 'tier-edit-list' }, tierRows),
-    h('p', { class: 'muted' }, 'Bài đã xếp vẫn giữ nguyên hạng.'),
-    h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:6px' },
+    list,
+    h('button', {
+      type: 'button', class: 'btn add-tier-btn',
+      onclick: () => { draft.tiers.push(newTier(draft.tiers)); paintRows(); const inputs = list.querySelectorAll('input[type=text]'); const last = inputs[inputs.length - 2]; if (last) { last.focus(); last.select(); } },
+    }, '＋ Thêm hạng'),
+    h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:12px' },
       h('button', { type: 'button', class: 'btn', onclick: closeModal }, 'Huỷ'),
       h('button', { type: 'submit', class: 'btn primary' }, 'Lưu')));
   form.addEventListener('submit', (e) => {
@@ -979,12 +1025,7 @@ function openLabelEditor(focus = null) {
     LIST.eyebrow = draft.eyebrow.trim();
     LIST.title = draft.title.trim();
     LIST.description = draft.description.trim();
-    LIST.tiers = LIST.tiers.map((t, i) => ({ ...t, name: draft.tiers[i].name.trim(), sub: draft.tiers[i].sub.trim(), color: draft.tiers[i].color, text: draft.tiers[i].text }));
-    saveList();
-    log({ type: 'edit-labels' });
-    save();
-    renderHeader();
-    render();
+    applyTiers(draft.tiers.map((t) => ({ ...t, name: t.name.trim(), sub: t.sub.trim() })));
     closeModal();
     toast('✓ Đã lưu', 'ok');
   });
@@ -994,6 +1035,7 @@ function openLabelEditor(focus = null) {
     if (el) { el.focus(); el.select && el.select(); }
   }, 40);
 }
+
 /* ---------- Sửa trực tiếp tại chỗ: bấm vào chữ -> gõ -> Enter lưu / Esc huỷ ---------- */
 const INLINE_FIELDS = {
   eyebrow: { max: 60, label: 'dòng nhỏ phía trên' },
