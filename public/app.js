@@ -501,7 +501,7 @@ async function loadSession(id) {
 
 /* ---------------- rendering ---------------- */
 const HINT_PLACE = 'Phím 1–5 để xếp, hoặc kéo thẻ thả vào hạng. X = bỏ bài này (không thích / không xếp). O = mở Apple Music · P = nghe thử.';
-const HINT_IDLE = 'Kéo ô trên bảng để đổi hạng hoặc đổi thứ tự. Chuột phải vào ô để đưa lên khung rút nghe lại.';
+const HINT_IDLE = 'Kéo ô trên bảng để đổi hạng hoặc đổi thứ tự. Chuột phải vào ô để đưa lên khung rút nghe lại. Bấm vào tiêu đề hay tên hạng để sửa.';
 
 function render() {
   renderProgress();
@@ -509,6 +509,7 @@ function render() {
   if (!rolling) renderStage();
 }
 function renderHeader() {
+  if (inlineEditing()) return;
   $('#eyebrow').textContent = LIST.eyebrow;
   $('#title').textContent = LIST.title;
   $('#desc').textContent = LIST.description;
@@ -544,14 +545,16 @@ function chip(id, kind = '') {
   }, h('b', {}, displayTitle(m)), h('small', {}, chipSub(m)));
 }
 function renderBoard() {
+  if (inlineEditing()) return;
   const wrap = $('#tiers');
   wrap.replaceChildren(...LIST.tiers.map((t, i) => {
     const zone = h('div', { class: 'tier-cards', dataset: { tier: t.id } }, S.tiers[t.id].map((id) => chip(id)));
     return h('section', { class: 'tier', style: `--c:${t.color};--t:${t.text || '#fff'}` },
       h('div', { class: 'tier-label' },
         h('span', { class: 'tier-num' }, i + 1),
-        h('div', { class: 'tier-name' }, t.name),
-        h('div', { class: 'tier-sub' }, t.sub),
+        h('div', { class: 'tier-name', dataset: { edit: 'tier', tier: t.id, prop: 'name' }, title: 'Bấm để sửa tên hạng' }, t.name),
+        h('div', { class: 'tier-sub', dataset: { edit: 'tier', tier: t.id, prop: 'sub' }, title: 'Bấm để sửa mô tả hạng' }, t.sub),
+        h('button', { type: 'button', class: 'tier-color-btn', dataset: { tier: t.id }, title: 'Đổi màu hạng', 'aria-label': 'Đổi màu hạng' }, '🎨'),
         S.tiers[t.id].length ? h('span', { class: 'tier-count' }, S.tiers[t.id].length) : null),
       zone);
   }));
@@ -828,7 +831,8 @@ function openRules() {
     ['T', 'Vote cùng bạn bè (đếm phiếu + đồng hồ)'],
     ['A', 'Thêm bài mới vào danh sách'],
     ['Z / Ctrl+Z', 'Hoàn tác'],
-    ['E / bấm đúp', 'Sửa tiêu đề & tên, mô tả, màu các hạng'],
+    ['Bấm vào chữ', 'Sửa trực tiếp tiêu đề, mô tả, tên & mô tả từng hạng (Enter lưu · Esc huỷ)'],
+    ['E / 🎨', 'Mở bảng sửa đầy đủ, kể cả màu các hạng'],
     ['M', 'Menu: lần xếp mới, lịch sử, nhật ký, danh sách bài, xuất kết quả'],
     ['C', 'Mở bảng luật này'],
   ];
@@ -904,7 +908,7 @@ function openMenu() {
     item('🍎 Đồng bộ Apple Music', missing ? `Tra link, năm, ảnh bìa cho ${missing} bài còn thiếu` : 'Đã có đủ — bấm để kiểm tra lại', syncAllApple),
     LIST.songs.some((s) => s.guest) && item(`🤝 Bài kết hợp: ${LIST.excludeGuests ? 'đang KHÔNG tính' : 'đang tính'}`, `${LIST.songs.filter((s) => s.guest).length} bài của nghệ sĩ khác có Thắng góp giọng — bấm để ${LIST.excludeGuests ? 'tính vào' : 'bỏ ra'}`, toggleGuests),
     item(`🍎 Mở Apple Music bằng: ${openMode().label}`, `${openMode().note} — bấm để đổi cách mở`, cycleOpenMode),
-    item('🎨 Sửa tiêu đề & các hạng', 'Đổi tên, mô tả, màu — hoặc bấm đúp vào tiêu đề / nhãn hạng (phím E)', () => openLabelEditor()),
+    item('🎨 Sửa tiêu đề & các hạng', 'Đổi tên, mô tả, màu (phím E) — hoặc bấm thẳng vào chữ trên trang để sửa tại chỗ', () => openLabelEditor()),
     item('✏️ Đổi tên lần xếp', S.name, renameSession),
     item('⬇️ Xuất kết quả (.md)', 'Bảng xếp hạng + nhật ký, dạng Markdown', () => exportSession(S.id)),
     item('⬇️ Xuất dữ liệu (.json)', 'Toàn bộ trạng thái lần xếp này', exportJSON),
@@ -982,18 +986,77 @@ function openLabelEditor(focus = null) {
     if (el) { el.focus(); el.select && el.select(); }
   }, 40);
 }
-document.addEventListener('dblclick', (e) => {
-  if (!S || dlg.open) return;
-  const label = e.target.closest && e.target.closest('.tier-label');
-  if (label) {
-    const zone = label.parentElement.querySelector('.tier-cards');
-    return openLabelEditor(zone ? `tier-${zone.dataset.tier}` : null);
-  }
-  const title = e.target.closest && e.target.closest('.title-card');
-  if (title && !e.target.closest('button')) {
-    const key = e.target.closest('#eyebrow') ? 'eyebrow' : e.target.closest('#desc') ? 'description' : 'title';
-    openLabelEditor(key);
-  }
+/* ---------- Sửa trực tiếp tại chỗ: bấm vào chữ -> gõ -> Enter lưu / Esc huỷ ---------- */
+const INLINE_FIELDS = {
+  eyebrow: { max: 60, label: 'dòng nhỏ phía trên' },
+  title: { max: 60, required: true, label: 'tiêu đề' },
+  description: { max: 400, label: 'mô tả' },
+  name: { max: 30, required: true, label: 'tên hạng' },
+  sub: { max: 80, label: 'mô tả hạng' },
+};
+function inlineSpec(el) {
+  return el.dataset.edit === 'tier' ? INLINE_FIELDS[el.dataset.prop] : INLINE_FIELDS[el.dataset.edit];
+}
+function readInline(el) {
+  if (el.dataset.edit === 'tier') { const t = tierById(el.dataset.tier); return t ? t[el.dataset.prop] || '' : ''; }
+  return LIST[el.dataset.edit] || '';
+}
+function startInlineEdit(el) {
+  if (!S || el.isContentEditable || dlg.open) return;
+  const spec = inlineSpec(el);
+  if (!spec) return;
+  const original = readInline(el);
+  let cancelled = false;
+  el.textContent = original;
+  try { el.contentEditable = 'plaintext-only'; } catch { el.contentEditable = 'true'; }
+  if (!el.isContentEditable) el.contentEditable = 'true';
+  el.classList.add('editing');
+  el.spellcheck = false;
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  const onKey = (e) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    if (e.key === 'Escape') { e.preventDefault(); cancelled = true; el.blur(); }
+  };
+  const onPaste = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\s+/g, ' ');
+    document.execCommand('insertText', false, text);
+  };
+  const finish = () => {
+    el.removeEventListener('keydown', onKey);
+    el.removeEventListener('paste', onPaste);
+    el.removeEventListener('blur', finish);
+    el.contentEditable = 'false';
+    el.removeAttribute('contenteditable');
+    el.classList.remove('editing');
+    const value = el.textContent.replace(/\s+/g, ' ').trim().slice(0, spec.max);
+    if (cancelled || value === original) { el.textContent = original; return; }
+    if (!value && spec.required) { el.textContent = original; toast(`Không để trống ${spec.label}`, 'warn'); return; }
+    if (el.dataset.edit === 'tier') tierById(el.dataset.tier)[el.dataset.prop] = value;
+    else LIST[el.dataset.edit] = value;
+    saveList();
+    log({ type: 'edit-labels' });
+    save();
+    renderHeader();
+    render();
+    toast(`✓ Đã lưu ${spec.label}`, 'ok');
+  };
+  el.addEventListener('keydown', onKey);
+  el.addEventListener('paste', onPaste);
+  el.addEventListener('blur', finish);
+}
+const inlineEditing = () => !!document.querySelector('.editing');
+document.addEventListener('click', (e) => {
+  const colorBtn = e.target.closest && e.target.closest('.tier-color-btn');
+  if (colorBtn) { e.preventDefault(); return openLabelEditor(`tier-${colorBtn.dataset.tier}`); }
+  const el = e.target.closest && e.target.closest('[data-edit]');
+  if (el && !el.isContentEditable) startInlineEdit(el);
 });
 
 async function renameSession() {
@@ -1127,7 +1190,7 @@ document.addEventListener('keydown', (e) => {
     if (modalKey && !e.target.matches('input, textarea, select')) modalKey(e);
     return;
   }
-  if (e.target.matches('input, textarea, select') || !S) return;
+  if (e.target.matches('input, textarea, select') || e.target.isContentEditable || !S) return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === 'Space') { e.preventDefault(); draw(e.shiftKey); return; }

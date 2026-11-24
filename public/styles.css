@@ -251,6 +251,21 @@ input:focus { outline: none; border-color: #f2a77c; box-shadow: 0 0 0 3px rgba(2
 .log-list li { padding: 7px 0; border-bottom: 1px solid var(--line); display: flex; gap: 12px; }
 .log-list time { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; font-size: 12px; }
 
+/* ---------- sửa trực tiếp tại chỗ ---------- */
+[data-edit] { cursor: text; border-radius: 8px; transition: background .15s, box-shadow .15s; }
+[data-edit]:hover:not(.editing) { box-shadow: 0 0 0 4px rgba(238, 122, 69, .14); background: rgba(238, 122, 69, .08); }
+.tier-label [data-edit]:hover:not(.editing) { box-shadow: 0 0 0 4px rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .14); }
+[data-edit].editing { outline: none; background: rgba(255, 255, 255, .9); color: var(--ink); box-shadow: 0 0 0 3px rgba(238, 122, 69, .45); caret-color: var(--accent-deep); }
+.tier-label [data-edit] { padding: 1px 6px; max-width: 100%; overflow-wrap: anywhere; }
+.tier-label .tier-sub:empty::before { content: '+ mô tả'; opacity: .55; }
+#desc:empty::before { content: '+ thêm mô tả'; opacity: .6; }
+.tier-color-btn {
+  position: absolute; top: 5px; right: 6px; width: 26px; height: 26px; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, .25); font-size: 13px; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s;
+}
+.tier-label:hover .tier-color-btn, .tier-color-btn:focus-visible { opacity: 1; }
+.tier-color-btn:hover { background: rgba(255, 255, 255, .45); }
+
 /* ---------- sửa tiêu đề & các hạng ---------- */
 textarea { resize: vertical; line-height: 1.5; }
 .title-card, .tier-label { cursor: default; }

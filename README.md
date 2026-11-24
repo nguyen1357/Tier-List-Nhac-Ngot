@@ -57,7 +57,8 @@ Bạn cũng xem được dữ liệu gốc trong D1 → `tierlist-nhac` → **Co
 | `A` | Thêm bài (có cảnh báo nếu trùng tên) |
 | `Z` hoặc `Ctrl+Z` | Hoàn tác |
 | `C` | Xem luật và phím tắt |
-| `E` hoặc bấm đúp vào tiêu đề / nhãn hạng | Sửa tiêu đề và tên, mô tả, màu các hạng |
+| Bấm vào chữ | Sửa trực tiếp tiêu đề, dòng nhỏ, mô tả, tên và mô tả từng hạng (`Enter` lưu, `Esc` huỷ) |
+| `E` hoặc nút 🎨 trên nhãn hạng | Mở bảng sửa đầy đủ, kể cả màu các hạng |
 | `M` | Menu: lần xếp mới, lịch sử, nhật ký, danh sách bài, xuất kết quả |
 
 ## Danh sách bài
