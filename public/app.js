@@ -828,6 +828,7 @@ function openRules() {
     ['T', 'Vote cùng bạn bè (đếm phiếu + đồng hồ)'],
     ['A', 'Thêm bài mới vào danh sách'],
     ['Z / Ctrl+Z', 'Hoàn tác'],
+    ['E / bấm đúp', 'Sửa tiêu đề & tên, mô tả, màu các hạng'],
     ['M', 'Menu: lần xếp mới, lịch sử, nhật ký, danh sách bài, xuất kết quả'],
     ['C', 'Mở bảng luật này'],
   ];
@@ -903,11 +904,98 @@ function openMenu() {
     item('🍎 Đồng bộ Apple Music', missing ? `Tra link, năm, ảnh bìa cho ${missing} bài còn thiếu` : 'Đã có đủ — bấm để kiểm tra lại', syncAllApple),
     LIST.songs.some((s) => s.guest) && item(`🤝 Bài kết hợp: ${LIST.excludeGuests ? 'đang KHÔNG tính' : 'đang tính'}`, `${LIST.songs.filter((s) => s.guest).length} bài của nghệ sĩ khác có Thắng góp giọng — bấm để ${LIST.excludeGuests ? 'tính vào' : 'bỏ ra'}`, toggleGuests),
     item(`🍎 Mở Apple Music bằng: ${openMode().label}`, `${openMode().note} — bấm để đổi cách mở`, cycleOpenMode),
+    item('🎨 Sửa tiêu đề & các hạng', 'Đổi tên, mô tả, màu — hoặc bấm đúp vào tiêu đề / nhãn hạng (phím E)', () => openLabelEditor()),
     item('✏️ Đổi tên lần xếp', S.name, renameSession),
     item('⬇️ Xuất kết quả (.md)', 'Bảng xếp hạng + nhật ký, dạng Markdown', () => exportSession(S.id)),
     item('⬇️ Xuất dữ liệu (.json)', 'Toàn bộ trạng thái lần xếp này', exportJSON),
   ), { wide: false });
 }
+/* ---------- Sửa tiêu đề & các hạng ---------- */
+function idealText(hex) {
+  const n = parseInt(String(hex).replace('#', ''), 16);
+  const r = (n >> 16) & 255; const g = (n >> 8) & 255; const b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.68 ? '#4a3227' : '#ffffff';
+}
+function openLabelEditor(focus = null) {
+  const draft = {
+    eyebrow: LIST.eyebrow, title: LIST.title, description: LIST.description,
+    tiers: LIST.tiers.map((t) => ({ ...t })),
+  };
+  const field = (label, value, onInput, { area = false, key = null, max = 200 } = {}) => {
+    const input = area
+      ? h('textarea', { rows: 3, maxlength: max, dataset: { key: key || '' } }, value)
+      : h('input', { type: 'text', value, maxlength: max, dataset: { key: key || '' } });
+    input.addEventListener('input', () => onInput(input.value));
+    return h('label', { class: 'full' }, label, input);
+  };
+  const tierRows = draft.tiers.map((t, i) => {
+    const preview = h('div', { class: 'tier-label edit-preview', style: `--c:${t.color};--t:${t.text}` },
+      h('span', { class: 'tier-num' }, i + 1), h('div', { class: 'tier-name' }, t.name), h('div', { class: 'tier-sub' }, t.sub));
+    const paint = () => {
+      preview.style.setProperty('--c', t.color);
+      preview.style.setProperty('--t', t.text);
+      preview.querySelector('.tier-name').textContent = t.name || '…';
+      preview.querySelector('.tier-sub').textContent = t.sub;
+    };
+    const name = h('input', { type: 'text', value: t.name, maxlength: 30, placeholder: 'Tên hạng', dataset: { key: `tier-${t.id}` } });
+    name.addEventListener('input', () => { t.name = name.value; paint(); });
+    const sub = h('input', { type: 'text', value: t.sub, maxlength: 80, placeholder: 'Dòng mô tả' });
+    sub.addEventListener('input', () => { t.sub = sub.value; paint(); });
+    const color = h('input', { type: 'color', value: t.color, title: 'Màu hạng' });
+    color.addEventListener('input', () => { t.color = color.value; t.text = idealText(color.value); paint(); });
+    return h('div', { class: 'tier-edit' }, preview,
+      h('div', { class: 'tier-edit-fields' },
+        h('label', {}, `Hạng ${i + 1}`, name),
+        h('label', {}, 'Mô tả', sub)),
+      h('label', { class: 'tier-edit-color' }, 'Màu', color));
+  });
+  const form = h('form', { class: 'label-editor' },
+    h('h3', {}, 'Tiêu đề'),
+    h('div', { class: 'form' },
+      field('Dòng nhỏ phía trên', draft.eyebrow, (v) => { draft.eyebrow = v; }, { key: 'eyebrow', max: 60 }),
+      field('Tiêu đề chính', draft.title, (v) => { draft.title = v; }, { key: 'title', max: 60 }),
+      field('Mô tả', draft.description, (v) => { draft.description = v; }, { area: true, key: 'description', max: 400 })),
+    h('h3', { style: 'margin-top:18px' }, 'Các hạng'),
+    h('div', { class: 'tier-edit-list' }, tierRows),
+    h('p', { class: 'muted' }, 'Bài đã xếp vẫn giữ nguyên hạng — chỉ đổi tên, mô tả và màu hiển thị.'),
+    h('div', { class: 'row', style: 'justify-content:flex-end;margin-top:6px' },
+      h('button', { type: 'button', class: 'btn', onclick: closeModal }, 'Huỷ'),
+      h('button', { type: 'submit', class: 'btn primary' }, 'Lưu')));
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!draft.title.trim() || draft.tiers.some((t) => !t.name.trim())) return toast('Tiêu đề chính và tên các hạng không được để trống', 'warn');
+    LIST.eyebrow = draft.eyebrow.trim();
+    LIST.title = draft.title.trim();
+    LIST.description = draft.description.trim();
+    LIST.tiers = LIST.tiers.map((t, i) => ({ ...t, name: draft.tiers[i].name.trim(), sub: draft.tiers[i].sub.trim(), color: draft.tiers[i].color, text: draft.tiers[i].text }));
+    saveList();
+    log({ type: 'edit-labels' });
+    save();
+    renderHeader();
+    render();
+    closeModal();
+    toast('✓ Đã lưu tiêu đề & các hạng', 'ok');
+  });
+  openModal('🎨 Sửa tiêu đề & các hạng', form, { wide: true });
+  setTimeout(() => {
+    const el = focus && form.querySelector(`[data-key="${focus}"]`);
+    if (el) { el.focus(); el.select && el.select(); }
+  }, 40);
+}
+document.addEventListener('dblclick', (e) => {
+  if (!S || dlg.open) return;
+  const label = e.target.closest && e.target.closest('.tier-label');
+  if (label) {
+    const zone = label.parentElement.querySelector('.tier-cards');
+    return openLabelEditor(zone ? `tier-${zone.dataset.tier}` : null);
+  }
+  const title = e.target.closest && e.target.closest('.title-card');
+  if (title && !e.target.closest('button')) {
+    const key = e.target.closest('#eyebrow') ? 'eyebrow' : e.target.closest('#desc') ? 'description' : 'title';
+    openLabelEditor(key);
+  }
+});
+
 async function renameSession() {
   const name = prompt('Tên lần xếp:', S.name);
   if (!name || !name.trim() || name.trim() === S.name) return;
@@ -975,6 +1063,7 @@ function describeEvent(e) {
     case 'add-song': return `＋ Thêm bài: ${s}`;
     case 'undo': return '↶ Hoàn tác';
     case 'rename': return `Đổi tên thành “${e.name}”`;
+    case 'edit-labels': return '🎨 Sửa tiêu đề / các hạng';
     case 'finish': return '🎉 Xếp xong toàn bộ';
     case 'exclude-group': return `Không tính ${e.group}`;
     case 'include-group': return `Tính cả ${e.group}`;
@@ -1059,6 +1148,7 @@ document.addEventListener('keydown', (e) => {
     case 'c': openRules(); break;
     case 'm': openMenu(); break;
     case 'o': openApple(); break;
+    case 'e': e.preventDefault(); openLabelEditor(); break;
     case 'p': togglePreview(); break;
     default:
   }
