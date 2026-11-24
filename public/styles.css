@@ -142,6 +142,9 @@ h1 { margin: 6px 0 10px; font-size: clamp(30px, 2.8vw, 46px); overflow-wrap: any
 .rolling-wrap { display: flex; align-items: center; gap: 16px; padding: 16px 18px; width: 100%; min-width: 0; }
 .roll-title { font-size: clamp(22px, 2vw, 30px); font-weight: 900; line-height: 1.1; }
 .roll-kicker { font-size: 12px; font-weight: 800; letter-spacing: .12em; opacity: .85; }
+.roll-hint { font-size: 12.5px; font-weight: 700; opacity: .85; margin-top: 6px; }
+.rolling-wrap[data-act] { cursor: pointer; }
+.reveal { user-select: none; }
 
 /* chọn hạng */
 .picker { margin-top: 12px; }
@@ -174,6 +177,8 @@ h1 { margin: 6px 0 10px; font-size: clamp(30px, 2.8vw, 46px); overflow-wrap: any
 .ctl.primary { flex: 1; min-width: 0; background: linear-gradient(150deg, #f59a66, var(--accent)); color: #fff; border-color: transparent; box-shadow: 0 6px 16px -4px rgba(217, 98, 47, .55); font-size: 14.5px; }
 .ctl.primary.waiting { opacity: .5; box-shadow: none; }
 .ctl.icon { width: 38px; padding: 0; flex: none; font-size: 16px; }
+.ctl.toggle { color: #b9a293; }
+.ctl.toggle.on { color: #fff; background: linear-gradient(150deg, #f59a66, var(--accent)); border-color: transparent; box-shadow: 0 4px 12px -4px rgba(217, 98, 47, .55); }
 kbd { font: inherit; font-size: 10px; font-weight: 800; opacity: .5; }
 
 /* ---------- board ---------- */
@@ -314,7 +319,11 @@ input:focus { outline: none; border-color: #f2a77c; box-shadow: 0 0 0 3px rgba(2
 .grp { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; }
 .grp.has-sel { border-color: #f2a77c; box-shadow: 0 0 0 2px rgba(238, 122, 69, .12); }
 .grp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; }
-.grp-check { display: flex; align-items: center; gap: 12px; cursor: pointer; min-width: 0; }
+.grp-check { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.grp-head.expandable, .grp-head { cursor: pointer; border-radius: 14px; }
+.grp-head:hover { background: #fffaf6; }
+.chev { font-size: 22px; line-height: 1; color: var(--muted); transition: transform .2s; padding: 0 4px; }
+.chev.open { transform: rotate(90deg); color: var(--accent-deep); }
 .grp-check input, .song-row input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; cursor: pointer; }
 .grp-text { display: flex; flex-direction: column; min-width: 0; }
 .grp-text b { font-size: 14px; }

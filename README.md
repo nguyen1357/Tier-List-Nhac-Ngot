@@ -51,15 +51,17 @@ Bạn cũng xem được dữ liệu gốc trong D1 → `tierlist-nhac` → **Co
 
 ## Cách chơi
 
-1. Bấm **🎲 Rút bài** (hoặc Space).
+1. Bấm **🎲 Quay**, rồi nhấn Space để dừng.
 2. Nghe thử, hoặc mở bài trên Apple Music.
 3. Bấm vào một hạng để xếp bài.
 
 Mẹo: kéo bài trên bảng để đổi hạng, chuột phải vào bài để nghe lại, bấm vào tiêu đề hoặc tên hạng để sửa chữ.
 
-Rút bài **🔀 ngẫu nhiên** hoặc **💿 theo album** (album xếp theo năm ra mắt): bấm nút ở trên khung rút bài để đổi. Bấm **☰** để chọn album, EP hoặc bài muốn xếp trước.
+**Ngẫu nhiên (nút 🔀 bật):** bấm để quay, nhấn Space để dừng, bài dừng lại tự phát nghe thử. Xếp xong một bài thì vòng quay tự chạy tiếp.
+**Theo album (nút 🔀 tắt):** rút lần lượt từng album, thứ tự album ngẫu nhiên, bài trong album đúng thứ tự.
+Bấm đúp vào khung bài (hoặc phím `L`) để chọn album, EP hoặc bài muốn xếp trước.
 
-Phím tắt: `Space` rút bài · `1`–`5` xếp hạng · `X` bỏ bài · `Z` hoàn tác · `P` nghe thử · `O` mở Apple Music · `T` vote · `L` chọn bài xếp trước · `M` menu.
+Phím tắt: `Space` quay / dừng · `S` bật/tắt ngẫu nhiên · `1`–`5` xếp hạng · `X` bỏ bài · `Z` hoàn tác · `P` nghe thử · `O` mở Apple Music · `T` vote · `L` chọn bài xếp trước · `M` menu.
 
 ## Danh sách bài
 
