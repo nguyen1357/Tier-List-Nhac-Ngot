@@ -912,6 +912,7 @@ function openMenu() {
     item('✏️ Đổi tên lần xếp', S.name, renameSession),
     item('⬇️ Xuất kết quả (.md)', 'Bảng xếp hạng + nhật ký, dạng Markdown', () => exportSession(S.id)),
     item('⬇️ Xuất dữ liệu (.json)', 'Toàn bộ trạng thái lần xếp này', exportJSON),
+    item('📥 Nhập lần xếp từ file', 'Đưa lần xếp cũ (file .json đã xuất, hoặc file trong data/sessions) lên đây', importSessions),
   ), { wide: false });
 }
 /* ---------- Sửa tiêu đề & các hạng ---------- */
@@ -1072,6 +1073,34 @@ async function exportSession(id) {
   if (S && S.id === id) await flush();
   const a = h('a', { href: `/api/sessions/${id}/export.md`, download: `${id}.md` });
   document.body.append(a); a.click(); a.remove();
+}
+function importSessions() {
+  closeModal();
+  const input = h('input', { type: 'file', accept: '.json,application/json', multiple: true, style: 'display:none' });
+  input.addEventListener('change', async () => {
+    let ok = 0; let lastId = null;
+    for (const file of input.files) {
+      try {
+        const data = JSON.parse(await file.text());
+        const s = data && data.session ? data.session : data; // file "Xuất dữ liệu" hoặc file trong data/sessions
+        if (!s || !s.id || !s.tiers || !s.listId) throw new Error('không phải file lần xếp');
+        if (s.listId !== LIST.id) throw new Error(`thuộc danh sách khác (${s.listId})`);
+        const exists = await api.get(`/api/sessions/${encodeURIComponent(s.id)}`).then(() => true, () => false);
+        if (exists && !confirm(`“${s.name}” đã có ở đây. Ghi đè bằng bản trong file?`)) continue;
+        await api.put(`/api/sessions/${encodeURIComponent(s.id)}`, s);
+        ok++; lastId = s.id;
+      } catch (e) {
+        toast(`${file.name}: ${e.message}`, 'error');
+      }
+    }
+    input.remove();
+    if (ok) {
+      toast(`📥 Đã nhập ${ok} lần xếp`, 'ok');
+      if (ok === 1 && lastId) await loadSession(lastId); else openHistory();
+    }
+  });
+  document.body.append(input);
+  input.click();
 }
 function exportJSON() {
   const blob = new Blob([JSON.stringify({ list: LIST, session: S }, null, 2)], { type: 'application/json' });

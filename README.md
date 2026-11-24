@@ -38,6 +38,10 @@ Mở **http://localhost:5173**. Không cần `npm install`. Đổi cổng: `PORT
 
 Xong. Web chạy ở `https://<ten-project>.pages.dev`. Từ giờ mỗi lần push lên GitHub, Cloudflare tự deploy lại.
 
+**Chuyển các lần xếp cũ trên máy lên cloud** (làm 1 lần), chọn một trong hai cách:
+- Mở web online → Menu → **📥 Nhập lần xếp từ file**, chọn các file trong thư mục `data/sessions/` trên máy (chọn được nhiều file cùng lúc).
+- Hoặc chạy trong thư mục code trên máy: `node scripts/sync-to-cloud.mjs https://<ten-project>.pages.dev <matkhau>`. Thêm `--list` nếu muốn đẩy luôn tiêu đề và các hạng bạn đã sửa trên máy.
+
 **Xem dữ liệu trên Cloudflare:** trong web vào Menu → Lịch sử / Nhật ký / Xuất kết quả (.md).
 Bạn cũng xem được dữ liệu gốc trong D1 → `tierlist-nhac` → **Console**, ví dụ:
 `SELECT seq, t, type, json FROM events ORDER BY session_id, seq;`
