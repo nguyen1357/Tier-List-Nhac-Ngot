@@ -3,6 +3,11 @@
 Web xếp tier list nhạc Ngọt & Thắng: rút từng bài, nghe, rồi xếp vào 5 hạng KẸO / NGỌT / CUỐN / CŨNG CŨNG / NHẠT.
 Mỗi lần xếp được lưu lại, kèm nhật ký từng thao tác.
 
+## 🌐 Web online: https://tierlist-ngot-thang.pages.dev
+
+Mở link là dùng, không cần cài gì. Mọi lần xếp và nhật ký được lưu trên cloud (Cloudflare D1).
+Mỗi commit lên nhánh `main` của repo này, Cloudflare tự build và deploy lại sau khoảng 1 phút.
+
 Có 2 cách chạy, cùng một bộ code:
 
 | | Chạy local | Cloudflare Pages |
@@ -29,9 +34,7 @@ Mở **http://localhost:5173**. Không cần `npm install`. Đổi cổng: `PORT
    - Build output directory: `public`
 
    Bấm **Save and Deploy**.
-4. **Gắn database:** vào project → **Settings → Bindings → Add → D1 database**:
-   - Variable name: `DB` (viết hoa, đúng như vậy)
-   - D1 database: `tierlist-nhac`
+4. **Gắn database:** đã khai báo sẵn trong `wrangler.toml` (biến `DB` → database `tierlist-nhac`). Nếu bạn deploy vào tài khoản khác, sửa `database_id` trong file đó cho khớp với database của bạn.
 5. **Đặt mật khẩu (nên làm):** vào **Settings → Variables and Secrets → Add**, kiểu *Secret*, tên `APP_PASSWORD`, giá trị là mật khẩu bạn muốn.
    Nếu không đặt, ai có link cũng xem và sửa được tier list của bạn.
 6. Vào tab **Deployments**, bấm **Retry deployment** (hoặc push một commit mới) để các thiết lập ở bước 4 và 5 có hiệu lực.
