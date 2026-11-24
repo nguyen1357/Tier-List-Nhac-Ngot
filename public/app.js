@@ -371,7 +371,6 @@ function land(pick, skip, prev) {
   ensureApple(pick, false, true);
   S.deferred = S.deferred.filter((x) => x !== pick);
   commit(skip ? { type: 'skip-draw', song: pick, skipped: prev } : { type: 'draw', song: pick }, () => { S.current = pick; });
-  if (meta(pick).preview) togglePreview(); // tự phát bản nghe thử (Space để dừng)
 }
 /** anim = danh sách để quay ngẫu nhiên; null = theo album (hiện nhanh bài tiếp theo) */
 async function rollAnimation(pick, anim) {
@@ -923,7 +922,7 @@ function openVote() {
 /* ---------- Luật ---------- */
 function openRules() {
   const steps = [
-    ['🎲', 'Bấm Rút bài để lấy một bài. Bài sẽ tự phát nghe thử.'],
+    ['🎲', 'Bấm Rút bài để lấy một bài.'],
     ['🎧', 'Nhấn Space để phát / dừng, hoặc mở trên Apple Music.'],
     ['👆', 'Bấm vào một hạng để xếp bài.'],
   ];
